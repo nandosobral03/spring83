@@ -1,0 +1,491 @@
+# Spring '83
+
+> *Note:* This is an updated draft specification published at the tail end of June 2022. It's the result of lots of correspondence, some private, some public, that resulted in many clarifications... and just as many deletions. That's good editing!
+
+> This is being posted for discussion -- definitely do not implement anything in here yet!
+
+## Introduction
+
+Spring '83 is a protocol that allows users to follow publishers on the internet -- who might be people, computer programs, or anything else -- in a way that's simple, expressive, and predictable.
+
+The basic unit of the protocol is the board, which is an HTML fragment, limited to 2217 bytes, unable to execute JavaScript or load external resources, but otherwise unrestricted.
+
+> *Aside:* If 2217 bytes is enough for [the first web page](http://info.cern.ch/hypertext/WWW/TheProject.html), it's enough for us.
+
+Each publisher maintains just one board. There is no concept of a history; think instead of a whiteboard that is amended or erased.
+
+Spring '83 aspires to be:
+
+**Simple.** This means the protocol is easy to understand and implement, even for a non-expert programmer.
+
+**Expressive.** This means the protocol embraces the richness, flexibility, and chaos of modern HTML and CSS. It does not formalize interactions and relationships into database schemas.
+
+**Predictable.** This means boards holds their place, maintaining a steady presence. It means also that clients only receive the boards they request, when they request them; there is no mechanism by which a server can "push" an unsolicited board.
+
+(Going further, the protocol doesn't provide any mechanism for replies, likes, favorites, or, indeed, feedback of any kind. Publishers are invited to use the flexibility of HTML to develop their own approaches, inviting readers to respond via email, submit a form, mail a postcard... whatever!)
+
+In addition, Spring '83 is
+
+**Federated.** This means boards are stored on different servers operated by different people.
+
+Spring '83 draws inspiration from many existing protocols and technologies; you can read about these in Discussion 1.
+
+## Implementation
+
+The key words "must", "must not", "required", "shall", "shall not", "should", "should not", "recommended",  "may", and "optional" in this document are to be interpreted as described in RFC 2119.
+
+https://www.ietf.org/rfc/rfc2119.txt
+
+## Terminology
+
+*board*: a fragment of HTML5, not necessarily a valid HTML5 document, not more than 2217 bytes long, encoded in UTF-8.
+
+*publisher*: the entity responsible for specifying a board's content.
+
+*key*: a public key on the Ed25519 curve, formatted as 64 hex characters.
+
+*signature*: a public key signature, formatted as 128 hex characters.
+
+*client*: an application, web or standalone, that publishes, retrieves, and displays boards.
+
+*server*: an application, reachable on the public internet, that accepts requests from clients to publish and retrieve boards.
+
+## Publishers, keys, and servers
+
+Publishers -- who might be people, computer programs, or anything else -- are identified and authorized by keypairs on the Ed25519 curve. The public part of the keypair, formatted as 64 hex characters, is the publisher's identifier, used to request their board from the server. The secret part of the keypair allows the publisher alone to edit their board.
+
+See Discussion 2 for a consideration of the benefits (substantial) and drawbacks (likewise) of keypair identity schemes.
+
+Each keypair corresponds to exactly one board. Again, there is no concept of a history; think instead of a whiteboard that is amended or erased.
+
+Because a publisher is identified by their key, boards are easy to verify. When a client requests a board for a particular key, the server might send a modified response -- inserting an advertisement, perhaps -- but the client will detect the invalid signature and ignore the board.
+
+Keys are globally unique, and they act as "coordination-free" identifiers, similar to UUIDs. Publishers don't need to register with any central authority. Instead, they need only to generate a keypair on the Ed25519 curve that conforms to a format requirement, and then publish their first board to the server of their choice.
+
+In this way, the keypair provides the identity and authorization "API" for the protocol, and the key becomes a consistent identity that publishers can move between servers.
+
+> *Aside:* The choice of the keypair is also, like several features of this protocol, motivated by a desire to keep implementation easy and stateless. Who wants to manage a complete login system? And send password reset emails? Not me!
+
+A server is identified by a hostname and, optionally, a path. Spring '83 is an HTTP API over TLS; therefore, the URL used to retrieve a board is
+
+```
+https://<hostname>/<path?>/<key>
+```
+
+For example, a board hosted on the server `bogbody.biz` is available at this URL:
+
+```
+https://bogbody.biz/ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623
+```
+
+### Generating conforming keys
+
+The protocol imposes a format requirement on keys. The content of Ed25519 keypairs is mostly random, so conforming keys can only be generated by trial and error.
+
+The format requirement accomplishes two things at once:
+
+1. It presents a "client puzzle" which requires a one-time investment of compute resources to "solve". Like [Hashcash](http://www.hashcash.org/), this provides a rudimentary form of abuse mitigation: a malicious publisher cannot generate conforming keys instantly and endlessly.
+
+2. It "bakes" some useful metadata into the key itself.
+
+A conforming key's final seven hex characters must be `83e` followed by four characters that, interpreted as MMYY, express a valid month and year in the range 01/00 .. 12/99. Formally, the key must match this regex:
+
+```
+/83e(0[1-9]|1[0-2])(\d\d)$/
+```
+
+Again, a conforming keypair can only be generated by trial and error. Using a single thread in an Apple M1 chip, this is accomplished in tens of minutes. Using many threads, it is accomplished in minutes, not seconds.
+
+The date "encoded" in those final four characters has teeth: the key is only valid in the two years preceding it, and expires at the end of the last day of the month specified. (This is analogous to a [credit card expiration date](https://en.wikipedia.org/wiki/ISO/IEC_7813#Physical_characteristics).)
+
+For example, the key
+
+```
+ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623
+```
+
+has an encoded expiration date of 0623, or 06/2023. This key is valid between 2021-06-01T00:00:00:00Z and 2023-07-01T00:00:00Z.
+
+This expiration policy makes key rotation mandatory over the long term. Clients may implement features that make the process more convenient, even automatic, but the recurring "stress test" on the publisher-follower link is a feature, not a bug. The goal is to keep Spring '83 relationships "live" and engaged, with fresh opt-ins every two years at most.
+
+The policy suggests to publishers, "You're going to lose your secret key eventually... why not lose it now?" and uses that loss as a mechanism to strengthen, rather than weaken, the network.
+
+### Discovering keys
+
+The process of discovering a particular publisher's board URL, or discovering board URLs to follow generally, is not part of this specification.
+
+However, it is presumed that a home page or profile page might contain a `<link>` element analogous to the kind used to specify RSS feeds. A client scanning a web page for an associated board should look for `<link>` elements with the `type` attribute set to `text/board+html`.
+
+```
+<link rel="alternate" type="text/board+html" href="https://bogbody.biz/ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623" />
+```
+
+## Boards in the client
+
+Much of the burden of the protocol falls on the client: to store a user's keypair securely, allow them to manage a collection of followed board URLs, and display boards safely.
+
+The client must:
+
+* reject boards larger than 2217 bytes
+* verify each board's cryptographic signature
+* situate each board inside its own Shadow DOM
+
+The client must not:
+
+* execute any JavaScript included in the board
+* load any images, media, or fonts linked by the board
+
+These two requirements should be satisfied with a [Content Security Policy](https://content-security-policy.com/). The design of this policy is not part of this specification, but here's an example that works for a simple web-based client:
+
+```
+default-src 'none';
+style-src 'self' 'unsafe-inline';
+font-src 'self';
+script-src 'self';
+form-action *;
+connect-src *;
+```
+
+It's important to allow `unsafe-inline` CSS so boards can style themselves!
+
+> *Aside:* The prohibition against images and other external resources is a matter of privacy, safety, and charisma. Privacy, because it prevents the use of tracking pixels and other "transponders". Safety, because it lowers the stakes for malicious and illegal content. Charisma, because images are so rich and appealing, they blot out everything else!
+> A future version of this protocol (Spring '84?) will support images, video, and/or audio, but I think it's worthwhile, at this time, to explore new "ways of relating" with those particular nozzles still shut.
+> Once they open, there's no going back!
+
+The element that encloses the Shadow DOM must be set to `display: block`.
+
+Preparing each board for display in its Shadow DOM, the client should prepend this default CSS:
+
+```
+<style>
+  :host {
+    position: relative;
+    background-color: <some light, desaturated color>;
+    box-sizing: border-box;
+    padding: 2rem;
+  }
+  time { display: none; }
+  p, h1, h2, h3, h4, h5 { margin: 0 0 2rem 0; }
+</style>
+```
+
+The board's inline CSS may override any of those rules. It may also "reset the world":
+
+```
+:host {
+  all: initial;
+}
+```
+
+The client should:
+
+* provide at least one mode in which boards are juxtaposed on a 2D canvas
+* present boards in an aspect ratio of roughly `1:sqrt(2)` or `sqrt(2):1`
+* open links in new windows or tabs
+
+Beyond the standards described above, Spring '83 doesn't specify how the client should display boards. For example, the client may:
+
+* provide a mode in which boards can be viewed one at a time
+* organize boards according to an abstruse algorithm
+* handle links to board URLs in a helpful way, even "transcluding" them (!)
+
+The protocol places no limitations on the HTML content of a board. Yes, forms are allowed! Knowing that the client will not execute JavaScript, publishers will probably not want to spend their precious bytes on inert code... but they are free to do so.
+
+Boards might be:
+
+* ephemeral notes about web pages recently read
+* weekly logs, wiped clean on Monday morning
+* yawlps to the universe
+
+Publishers should expect their boards to be placed on a 2D canvas alongside many others. They should also expect their boards to be presented in an aspect ratio of `1:sqrt(2)` or `sqrt(2):1`, although clients may display them differently.
+
+### Boards with special instructions
+
+Clients should scan board HTML for the `<link rel="next">` element:
+
+```
+<link rel="next" href="<board URL>">
+```
+
+This element is used by publishers to migrate from key to key and server to server. When the client finds a `<link rel="next">` element, it should retrieve the board at the URL specified, verify it normally, and either (a) notify the user, or (b) automatically update its record of the board's URL.
+
+A board should contain only one `<link rel="next">` element. If it contains more than one, the client must honor the first and ignore the rest.
+
+The new board specified by a `<link rel="next">` element must not, itself, have a `<link rel="next">` element. If it does, the client must cancel the migration, ignoring the new board.
+
+The client may also scan for data stored in `meta` tags and `data-spring-*` attributes throughout the board. These fields and their uses will be defined by publishers and client developers.
+
+## Boards on the server
+
+Spring '83 servers are, in operation, very similar to "plain old web" servers, with a few additional behaviors.
+
+The server must maintain a persistent store of boards and enforce a TTL, which must be not less than 7 days and not more than 22 days.
+
+The transmission portion of Spring '83 operates over HTTP, using TLS, so it can be implemented easily using existing tools. The examples below use HTTP/1.1, but transmission over HTTP/2 and HTTP/3 is permitted.
+
+A Spring '83 server must respond at the following HTTP endpoints:
+
+```
+OPTIONS
+GET /
+PUT /<key>
+GET /<key>
+DELETE /<key>
+```
+
+That's a pretty small API surface! We'll go through the endpoints one by one.
+
+### Serving clients: OPTIONS
+
+Many clients will, by dint of being web apps, depend on CORS to retrieve boards from non-origin servers. Servers must (1) support preflight OPTIONS requests, and (2) add the appropriate CORS headers to all responses:
+
+```
+HTTP/1.1 204 No Content
+Access-Control-Allow-Methods: GET, OPTIONS, PUT
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type, If-Modified-Since, Spring-Signature, Spring-Version
+Access-Control-Expose-Headers: Content-Type, Last-Modified, Spring-Signature, Spring-Version
+```
+
+### Introducing yourself: GET /
+
+The server must provide a valid HTML page at its base URL containing, at minimum:
+
+* its operator's contact information
+* its current board TTL
+* a rough assessment of its robustness and availability
+* an articulation of its publishing standards
+
+### Publishing boards: PUT /`<key>`
+
+Publishers will generally select a home server that they consider reliable and trustworthy. To publish a board, the client must send that server a request of this form:
+
+```
+PUT /<key> HTTP/1.1
+Content-Type: text/html;charset=utf-8
+Spring-Version: 83
+Spring-Signature: <signature>
+<board>
+```
+
+Upon receipt, the server must check the non-cryptographic part of the PUT request immediately, and, if necessary, return an error code.
+
+#### Checking boards
+
+##### Size
+
+If the board is larger than 2217 bytes, the server must reject the PUT request with 413 Payload Too Large.
+
+##### Timestamp
+
+The timestamp is transmitted as part of the board HTML. The client must include a `<time>` element with its `datetime` attribute set to a UTC timestamp in ISO 8601 format, sans milliseconds: `YYYY-MM-DDTHH:MM:SSZ`.
+
+For the convenience of server implementers, the `<time>` element's opening tag must fit the following format exactly; "valid HTML" is not sufficient:
+
+```
+<time datetime="YYYY-MM-DDTHH:MM:SSZ">
+```
+
+The `<time>` element may have text content, or it may be empty. Clients should hide the element by default; the board may include CSS that reveals it.
+
+It's important that the timestamp is transmitted this way, because it needs to be signed along with the rest of the board's HTML. The client should add the `<time>` element automatically, just before signing and transmitting the board.
+
+The board should contain only one `<time>` element. If it contains more than one, the server must honor the first and ignore the rest.
+
+The server must reject the PUT request, returning 400 Bad Request, if
+
+* the request is transmitted without a `<time>` element; or
+* the element's `datetime` attribute is not a UTC timestamp in the ISO 8601 format described above; or
+* the element's `datetime` attribute contains a timestamp in the future; or
+* the element's `datetime` attribute contains a timestamp more than 22 days in the past.
+<!-- HERE -->
+If the incoming board's timestamp is older than or equal to the timestamp of the server's version of the board, the server must reject the request, returning 409 Conflict.
+
+These criteria are EXTREMELY important. The `<time>` element modulates a board's change over time; if it gets screwed up, the publisher could lose the ability to update their board.
+
+##### Key format
+
+The key format requirements are described earlier in this specification, and reproduced here for convenience.
+
+A conforming key's final seven hex characters must be "83e" followed by four characters that, interpreted as MMYY, express a valid month and year in the range 01/00 .. 12/99. Formally, the key must match this regex:
+
+```
+/83e(0[1-9]|1[0-2])(\d\d)$/
+```
+
+If the key does not match that regex, the server must reject the request, returning 403 Forbidden.
+
+The key is only valid in the two years preceding its encoded expiration date, and expires at the end of the last day of the month specified. For example, the key
+
+```
+c761fd8e4abc6ee4ca6d0883a95b7f0c88d33835a085b382dfbfb435283e0623
+```
+
+has an encoded expiration date of 0623, or 06/2023. This key is valid between 2021-06-01T00:00:00:00Z and 2023-07-01T00:00:00Z.
+
+If the key has expired, or indicates a date more than two years in the future, the server must reject the request, returning 403 Forbidden.
+
+##### Cryptographic validity
+
+The server must verify that `<signature>` is `<key>`'s valid signature for the board, exactly as transmitted. If the board isn't properly signed, the server must reject the request, returning 401 Unauthorized.
+
+##### A special case
+
+Spring '83 defines a test keypair:
+
+```
+public: ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583
+secret: 3371f8b011f51632fea33ed0a3688c26a45498205c6097c352bd4d079d224419
+```
+
+Servers must reject PUT requests for this key, returning 401 Unauthorized. (See the section on GET /`<key>`, below, for more guidance.)
+
+#### Denying boards
+
+The server must implement a denylist. If `<key>` is on the server's denylist, it must reject the request, returning 403 Forbidden.
+
+The protocol defines an infernal key:
+
+```
+d17eef211f510479ee6696495a2589f7e9fb055c2576749747d93444883e0123
+```
+
+which the server must deny, returning 403 Forbidden. This is to validate it has implemented a denylist.
+
+#### Storing boards
+
+If the preceding checks are all met, the server must store the board with a TTL of, at most, 22 days.
+
+If the server is busy, it may decline the PUT request, returning 429 Too Many Requests.
+
+#### "Deleting" boards
+
+The protocol does not provide a DELETE endpoint.
+
+Instead, the publisher should transmit a PUT request for a board containing nothing except the `<time>` element, as described above.
+
+> *Aside:* This limitation has to do with the protocol's cryptographic infrastructure. A malicious user can replace a deleted board with a copy of a previous version. To prevent this, we need a "tombstone" with a proper timestamp: the empty board.
+
+The server should interpret a stored board containing nothing but a `<time>` element as "missing" and return 404 Not Found.
+
+The server may provide this empty board to requesters until it expires -- at most, 22 days later -- at which point, the server must return 404 Not Found.
+
+#### Displaying boards
+
+Outside the context of a specific PUT request, the server must not display or enumerate boards unless those boards, or their publishers, have been reviewed and approved by its operator.
+
+So, for example, if the operator wishes to display a list of recently updated boards on the server's home page, they may do so -- if they (a) have reviewed those boards, or (b) know and trust their publishers.
+
+> *Aside:* The logic here is simple: an unknown board from an unknown publisher might contain anything! Displaying arbitrary -- possibly malicious -- content goes against the protocol's value of predictability, its "pull-only" design.
+
+### Retrieving boards: GET /`<key>`
+
+The client must transmit a request of this form:
+
+```
+GET /<key> HTTP/1.1
+Spring-Version: 83
+If-Modified-Since: <date and time in UTC, RFC 5322 format>
+```
+
+If the server does not have a board for `<key>`, it must return 404 Not Found.
+
+If the server has a board for `<key>` but it is not newer than the timestamp specified in If-Modified-Since, it must return 304 Not Modified.
+
+If the client omits If-Modified-Since, the server should return whatever board it has for `<key>`, if it has one.
+
+The server's response must take the form:
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=utf-8
+Spring-Version: 83
+Last-Modified: <date and time in UTC, HTTP (RFC 5322) format>
+Spring-Signature: <signature>
+<board>
+```
+
+The client must verify that `<signature>` is `<key>`'s valid signature for the board, exactly as transmitted. If the board isn't signed properly, the client must drop the response. It should communicate to the user that the server is either faulty or dishonest.
+
+The `Last-Modified` header is provided for proxies that "speak HTTP"; the client should not consider it authoritative, attending instead to the `<time>` element included in the board HTML.
+
+If the server is busy, it may decline the GET request, returning 429 Too Many Requests.
+
+If the server is unreachable, or returns an error code, the client must wait for a minimum timeout of 5 minutes before attempting to contact that peer again. If the server is still not reachable, the client must apply a jittered backoff strategy. The client should cap its timeout at some maximum; one hour is recommended.
+
+#### Serving web browsers
+
+If the server receives a request without a `Spring-Version` header -- indicating it did not come from a client aware of the protocol -- it may serve the requested board "wrapped" in a simple, informative HTML document.
+
+> *Aside:* Yes, this "tempers" with the board's HTML... but the web browser wasn't going to verify its signature anyway! A scrap of context -- "This is a Spring '83 board; here's a link to an appropriate client" -- helps bring viewers into the Spring '83 ecosystem.
+
+This is optional; the server may also provide the raw board HTML.
+
+#### Forgetting boards
+
+The server must store boards with a TTL of, at most, 22 days.
+
+> *Aside:* 22 is a magic number.
+
+The server must provide identical responses to requests for
+
+* `<key A>`, for which it once stored a board, now expired or deleted, and
+* `<key B>`, for which it never stored any board.
+
+#### Helping developers
+
+Spring '83 specifies a test keypair:
+
+```
+public: ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583
+secret: 3371f8b011f51632fea33ed0a3688c26a45498205c6097c352bd4d079d224419
+```
+
+The server should respond to GET requests for this key with an ever-changing board, generated internally, signed appropriately, with a timestamp set to the time of the request. This board is provided to help client developers understand and troubleshoot their applications.
+
+> *Aside:* This test keypair technically expired a long time ago, so servers will have to add special logic to recognize and handle it.
+
+## Error code quick reference
+
+* 400: Board was submitted with an impromper timestamp.
+* 401: Board was submitted without a valid signature.
+* 403: Board was submitted for a non-conforming, expired, or blocked key.
+* 404: No board for this key found on this server.
+* 409: Board was transmitted with a timestamp older than the server's timestamp for this board.
+* 413: Board is larger than 2217 bytes.
+
+## Discussions
+
+### 1: Inspirations
+
+This protocol draws inspiration
+
+* from Secure Scuttlebutt: the power of cryptographic keypairs as identities
+* from Hashcash: the notion of guarding server resources with client puzzles
+* from ZeroTier: the spirit of "decentralize until it hurts, then centralize until it works".
+
+and, most of all,
+
+* from [the Quote of the Day Protocol](https://datatracker.ietf.org/doc/html/rfc865), defined by Jon Postel in May 1983: the vision of simplicity
+
+For those not familiar: QOTD operates over both TCP and UDP; the server responds to a TCP connection or a UDP datagram with a single brief message.
+
+In fact, I very badly wanted Spring '83 to operate over UDP -- responding to a request with, in some cases, a single datagram packet: beautiful -- but the architecture of the modern internet makes that much more difficult today than it was in 1983, and, anyway, there's a universe of capable tooling for HTTP. 
+
+So, not without regret, Spring '83 goes with the flow.
+
+### 2: The agony and ecstasy of public key cryptography
+
+There are a lot of reasons NOT to use cryptographic keypairs as identities, not least of which: the certainty that a user will eventually lose their secret key.
+
+But the profound magic trick of the signature: that it allows a piece of content to move through the internet, handed from server to server, impossible to tamper with... it's too good to pass up.
+
+And the way public key cryptography allows anyone to "join" the system, without registering anywhere, simply by generating an appropriate keypair -- again, it's a trick so good it seems like it shouldn't work.
+
+The trapdoor function at the heart of public key cryptography is mirrored in the trapdoor of its user experience: once a secret key is lost or compromised, the identity is done. Game over. The system offers no customer support, because the system is math, and all the angels are busy assisting other callers.
+
+It's one of the harshest if/thens in all of computing, and a steep price to pay for the magic trick. Spring '83, given its other priorities and constraints, is willing to pay that price -- but only barely.
+
+The compromise is mandatory key rotation, enforced with the expiration policy.
+
+Beyond that, there is plenty of space for Spring '83 clients to offer hosted ("custodial") secret keys, abstracting the keypair behind a more traditional username and password.
