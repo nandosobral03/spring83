@@ -1,7 +1,5 @@
 use chrono::{Datelike, NaiveDateTime};
 use ed25519_dalek::{Verifier};
-use sha2::Sha256;
-use rand::rngs::OsRng;
 
 
 
@@ -14,7 +12,8 @@ pub fn validate_key(key: &str) -> Result<(), MyError> {
     // [a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$
     let re = regex::Regex::new(r"^[a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$").unwrap();
     let key_len = key.len();
-    println!("Captures: {:?}", re.captures(key));
+    println!("key: {}", key);
+    println!("key_len: {}", key_len);
     if !re.is_match(key) || key_len != 64 {
         return Err(MyError {
             message: "Forbidden".to_string(),
@@ -114,12 +113,13 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
 pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(), MyError> {
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
     let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
+
     public_key.verify(body.as_bytes(), &signature).map_err(|_| MyError {
         message: "Invalid signature".to_string(),
         status: 403,
     })?;
 
-
+    
 
 
 

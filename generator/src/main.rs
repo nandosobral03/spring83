@@ -90,11 +90,7 @@ fn generate() {
 }
 
 fn sign() {
-    let html = "<html>\n\
-        asd\n\
-        <time datetime=\"2023-06-20T10:39:35Z\">\n\
-    </html>\n\
-    ";
+    let html = "<html>asd<time datetime=\"2023-06-20T10:39:35Z\"></html>";
     let filename = "./keypair.txt";
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
     let lines: Vec<&str> = contents.split("\n").collect();
