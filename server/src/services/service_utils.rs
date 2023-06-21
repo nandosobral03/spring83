@@ -1,4 +1,9 @@
 use chrono::{Datelike, NaiveDateTime};
+use ed25519_dalek::{Verifier};
+use sha2::Sha256;
+use rand::rngs::OsRng;
+
+
 
 pub struct MyError {
     pub message: String,
@@ -12,8 +17,8 @@ pub fn validate_key(key: &str) -> Result<(), MyError> {
     println!("Captures: {:?}", re.captures(key));
     if !re.is_match(key) || key_len != 64 {
         return Err(MyError {
-            message: "Invalid key".to_string(),
-            status: 400,
+            message: "Forbidden".to_string(),
+            status: 403,
         });
     }
     let month = &key[64 - 4..64 - 2];
@@ -103,4 +108,21 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
         message: "No timestamp found".to_string(),
         status: 400,
     });
+}
+
+
+pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(), MyError> {
+    let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
+    let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
+    public_key.verify(body.as_bytes(), &signature).map_err(|_| MyError {
+        message: "Invalid signature".to_string(),
+        status: 403,
+    })?;
+
+
+
+
+
+    
+    Ok(())
 }
