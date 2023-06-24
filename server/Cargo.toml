@@ -25,3 +25,5 @@ regex = "1.8.4"
 tl = "0.7.7"
 ed25519 = "2.2.1"
 ed25519-dalek = "1.0.1"
+mongodb = "2.6.0"
+reqwest = { version = "0.11.8", features = ["blocking", "json"] }

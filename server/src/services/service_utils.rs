@@ -1,5 +1,9 @@
-use chrono::{Datelike, NaiveDateTime};
+use std::{env};
+
+use chrono::{Datelike};
+use dotenvy::dotenv;
 use ed25519_dalek::{Verifier};
+use mongodb::{options::ClientOptions, Client, Database};
 
 
 
@@ -12,8 +16,6 @@ pub fn validate_key(key: &str) -> Result<(), MyError> {
     // [a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$
     let re = regex::Regex::new(r"^[a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$").unwrap();
     let key_len = key.len();
-    println!("key: {}", key);
-    println!("key_len: {}", key_len);
     if !re.is_match(key) || key_len != 64 {
         return Err(MyError {
             message: "Forbidden".to_string(),
@@ -58,7 +60,7 @@ pub fn validate_key(key: &str) -> Result<(), MyError> {
     Ok(())
 }
 
-pub fn validate_timestamp(body: &String) -> Result<NaiveDateTime, MyError> {
+pub fn validate_timestamp(body: &String) -> Result<String, MyError> {
     let datetime = get_datetime(body)?;
     // ISO 8601 format YYYY-MM-DDTHH:MM:SSZ
     let time = chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%dT%H:%M:%SZ").map_err(|_| MyError {
@@ -80,7 +82,7 @@ pub fn validate_timestamp(body: &String) -> Result<NaiveDateTime, MyError> {
         });
     }
     
-    Ok(time)
+    Ok(datetime)
 }
 
 
@@ -109,7 +111,6 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
     });
 }
 
-
 pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(), MyError> {
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
     let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
@@ -118,11 +119,29 @@ pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(
         message: "Invalid signature".to_string(),
         status: 403,
     })?;
-
-    
-
-
-
-    
+    // TODO validate blacklist and denylist
     Ok(())
+}
+
+
+pub async fn get_db_connection() -> Result<Database, MyError> {
+    dotenv().map_err(|_| MyError {
+        message: "Failed to read .env file".to_string(),
+        status: 500,
+    })?;
+    let database_url = env::var("DATABASE_URL").map_err(|_| MyError {
+        message: "Failed to read DATABASE_URL from .env file".to_string(),
+        status: 500,
+    })?;
+    let client_options =
+    ClientOptions::parse(database_url)
+        .await.map_err(|_| MyError {
+            message: "Failed to parse database url".to_string(),
+            status: 500,
+        })?;
+    let client = Client::with_options(client_options).map_err(|_| MyError {
+        message: "Failed to connect to database".to_string(),
+        status: 500,
+    })?;
+    Ok(client.database("spring83"))
 }

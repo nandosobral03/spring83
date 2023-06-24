@@ -20,15 +20,6 @@ fn main() {
     }
 
     let command = &args[1]; 
-    if command == "sign" {
-        sign();
-    } else if command == "generate" {
-        generate();
-    } else {
-        println!("Usage: {} [sign|generate]", args[0]);
-        return;
-    }
-
     match command.as_str() {
         "sign" => sign(),
         "generate" => generate(),
@@ -90,7 +81,7 @@ fn generate() {
 }
 
 fn sign() {
-    let html = "<html>asd<time datetime=\"2023-06-20T10:39:35Z\"></html>";
+    let html = "<html>asd<time datetime=\"2023-06-19T10:39:35Z\"></html>";
     let filename = "./keypair.txt";
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
     let lines: Vec<&str> = contents.split("\n").collect();
@@ -114,31 +105,23 @@ fn sign() {
 pub fn validate_key(key: &str) -> bool {
     // [a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$
     let re = regex::Regex::new(r"^[a-zA-Z0-9]+83e(0[1-9]|1[0-2])(\d\d)$").unwrap();
-    let key_len = key.len();
-    if !re.is_match(key) || key_len != 64 {
+    if !re.is_match(key){
         return false;
     }
+
     let month = &key[64 - 4..64 - 2];
     let year = &key[64 - 2..64];
-    let month: u8 = month.parse().unwrap();
-    let year: u8 = year.parse().unwrap();
 
-    let current_year = ((chrono::Local::now().year()) % 100) as u8;
-    let current_month = chrono::Local::now().month() as u8;
-
-    if year < current_year - 2 {
-        return false;
-    }
-    if year > current_year {
+    if year != "23" && year != "22" {
         return false;
     }
 
-    if year == current_year - 2 && month < current_month {
-        return false;
-    }
+    // if year == current_year - 2 && month < current_month {
+    //     return false;
+    // }
 
-    if year == current_year && month > current_month {
-        return false;
-    }
+    // if year == current_year && month > current_month {
+    //     return false;
+    // }
     return true;
 }

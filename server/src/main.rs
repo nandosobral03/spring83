@@ -3,7 +3,7 @@ use std::{fs};
 use axum::{
     middleware::Next,
     response::{Html, IntoResponse, Response},
-    routing::{get, options, put},
+    routing::{get, options, put, delete},
     Router, Server,
 };
 
@@ -19,6 +19,10 @@ async fn main() {
                         .route("/", get(introduction))
                         .route("/", options(|| async { StatusCode::NO_CONTENT }))
                         .route("/:key", put(routes::boards_routes::put_board))
+                        .route("/:key", get(routes::boards_routes::get_board))
+                        .route("/denied/:key", put(routes::deny_list_routes::add_denied_key))
+                        .route("/denied/:key", delete(routes::deny_list_routes::delete_denied_key))
+                        .route("/denied", get(routes::deny_list_routes::get_denied_keys))
                         .layer(axum::middleware::from_fn(propagate_header));
     // Start the server
     let addr = ("127.0.0.1:".to_string() + &port).parse().unwrap();
@@ -37,7 +41,6 @@ async fn introduction() -> impl IntoResponse {
 }
 
 async fn propagate_header<B>(req: Request<B>, next: Next<B>) -> Response {
-    print!("{:?}", req.headers() );
     if req.method() == Method::OPTIONS {
         let mut res = next.run(req).await;
         res.headers_mut().insert("Access-Control-Allow-Methods", "GET, OPTIONS, PUT".parse().unwrap());
