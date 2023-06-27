@@ -1,11 +1,9 @@
-use std::{env};
+use std::env;
 
-use chrono::{Datelike};
+use chrono::Datelike;
 use dotenvy::dotenv;
-use ed25519_dalek::{Verifier};
+use ed25519_dalek::Verifier;
 use mongodb::{options::ClientOptions, Client, Database};
-
-
 
 pub struct MyError {
     pub message: String,
@@ -63,10 +61,13 @@ pub fn validate_key(key: &str) -> Result<(), MyError> {
 pub fn validate_timestamp(body: &String) -> Result<String, MyError> {
     let datetime = get_datetime(body)?;
     // ISO 8601 format YYYY-MM-DDTHH:MM:SSZ
-    let time = chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%dT%H:%M:%SZ").map_err(|_| MyError {
-        message: "Incorrect timestamp format".to_string(),
-        status: 400,
-    })?;
+    let time =
+        chrono::NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%dT%H:%M:%SZ").map_err(|_| {
+            MyError {
+                message: "Incorrect timestamp format".to_string(),
+                status: 400,
+            }
+        })?;
     let current_time = chrono::Local::now().naive_local();
     if time > current_time {
         return Err(MyError {
@@ -81,10 +82,9 @@ pub fn validate_timestamp(body: &String) -> Result<String, MyError> {
             status: 400,
         });
     }
-    
+
     Ok(datetime)
 }
-
 
 fn get_datetime(body: &String) -> Result<String, MyError> {
     let dom = tl::parse(body, tl::ParserOptions::default()).unwrap();
@@ -95,7 +95,7 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
                 if let Some(Some(timestamp)) = node.as_tag().unwrap().attributes().get("datetime") {
                     if let Some(timestamp) = timestamp.try_as_utf8_str() {
                         return Ok(timestamp.to_string());
-                    }else{
+                    } else {
                         return Err(MyError {
                             message: "Incorrect timestamp format".to_string(),
                             status: 400,
@@ -115,14 +115,15 @@ pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
     let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
 
-    public_key.verify(body.as_bytes(), &signature).map_err(|_| MyError {
-        message: "Invalid signature".to_string(),
-        status: 403,
-    })?;
+    public_key
+        .verify(body.as_bytes(), &signature)
+        .map_err(|_| MyError {
+            message: "Invalid signature".to_string(),
+            status: 403,
+        })?;
     // TODO validate blacklist and denylist
     Ok(())
 }
-
 
 pub async fn get_db_connection() -> Result<Database, MyError> {
     dotenv().map_err(|_| MyError {
@@ -133,9 +134,9 @@ pub async fn get_db_connection() -> Result<Database, MyError> {
         message: "Failed to read DATABASE_URL from .env file".to_string(),
         status: 500,
     })?;
-    let client_options =
-    ClientOptions::parse(database_url)
-        .await.map_err(|_| MyError {
+    let client_options = ClientOptions::parse(database_url)
+        .await
+        .map_err(|_| MyError {
             message: "Failed to parse database url".to_string(),
             status: 500,
         })?;

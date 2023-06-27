@@ -4,7 +4,7 @@ use axum::{extract::Path, response::IntoResponse};
 use dotenvy::dotenv;
 use hyper::{HeaderMap, StatusCode};
 
-use crate::services::{deny_list};
+use crate::services::deny_list;
 
 use super::route_utils::handle_error;
 
@@ -27,7 +27,6 @@ pub async fn add_denied_key(headers: HeaderMap, Path(key): Path<String>) -> impl
         Ok(_) => (StatusCode::OK, "OK").into_response(),
         Err(e) => handle_error(e).into_response(),
     }
-
 }
 
 pub async fn delete_denied_key(headers: HeaderMap, Path(key): Path<String>) -> impl IntoResponse {
@@ -49,7 +48,6 @@ pub async fn delete_denied_key(headers: HeaderMap, Path(key): Path<String>) -> i
         Ok(_) => (StatusCode::OK, "OK").into_response(),
         Err(e) => handle_error(e).into_response(),
     }
-
 }
 
 pub async fn get_denied_keys() -> impl IntoResponse {

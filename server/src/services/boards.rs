@@ -1,24 +1,33 @@
-use super::{service_utils::{
-    get_db_connection, validate_key, validate_signature, validate_timestamp, MyError,
-}, deny_list::is_denied_key};
-use chrono::{DateTime, FixedOffset};
+use crate::routes::boards_routes::Orientation;
+
+use super::{
+    deny_list::is_denied_key,
+    service_utils::{
+        get_db_connection, validate_key, validate_signature, validate_timestamp, MyError,
+    },
+};
+use chrono::{DateTime, Utc, TimeZone};
 use ed25519_dalek::*;
-use mongodb::bson::{doc};
+use mongodb::{bson::{doc, self}, options::{FindOptions}};
 use serde::{Deserialize, Serialize};
 
-
-pub async fn put_board(key: String, sig: String, body: String) -> Result<(), MyError> {
+pub async fn put_board(
+    key: String,
+    sig: String,
+    orientation: Orientation,
+    body: &String,
+) -> Result<(), MyError> {
     validate_key(&key)?;
     board_is_empty(&body)?;
     let timestamp = validate_timestamp(&body)?;
-    if is_denied_key(&key).await?{
+    if is_denied_key(&key).await? {
         return Err(MyError {
             message: "Forbidden".to_string(),
             status: 403,
         });
     }
     validate_signature(&sig, &key, &body)?;
-    save_board(&key, &body, &timestamp,&sig).await?;
+    save_board(&key, &body, &timestamp, orientation, &sig).await?;
     Ok(())
 }
 
@@ -28,19 +37,51 @@ pub struct Board {
     pub key: String,
     pub body: String,
     pub timestamp: String,
-    pub last_modified: String,
+    pub last_modified: i64,
     pub signature: String,
+    pub orientation: Orientation,
 }
 
-async fn save_board(key: &str, body: &str, timestamp: &str, sig: &str) -> Result<(), MyError> {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardDisplay {
+    pub body: String,
+    pub timestamp: String,
+    pub last_modified: String,
+    pub signature: String,
+    pub orientation: Orientation,
+}
+
+impl From<Board> for BoardDisplay {
+    fn from(board: Board) -> Self {
+       let last_modified = chrono::Utc.timestamp_millis_opt(board.last_modified).unwrap().to_rfc3339().parse().unwrap();
+        BoardDisplay {
+            body: board.body,
+            timestamp: board.timestamp,
+            last_modified,
+            signature: board.signature,
+            orientation: board.orientation,
+        }
+    }
+}
+
+
+
+async fn save_board(
+    key: &str,
+    body: &str,
+    timestamp: &str,
+    orientation: Orientation,
+    sig: &str,
+) -> Result<(), MyError> {
     let client = get_db_connection().await?;
 
     let board = Board {
         key: key.to_string(),
         body: body.to_string(),
         timestamp: timestamp.to_string(),
-        last_modified: chrono::Utc::now().to_rfc3339(),
+        last_modified: chrono::Utc::now().timestamp_millis(),
         signature: sig.to_string(),
+        orientation,
     };
 
     let existsing_board = client
@@ -52,19 +93,24 @@ async fn save_board(key: &str, body: &str, timestamp: &str, sig: &str) -> Result
             status: 500,
         })?;
     if let Some(board) = existsing_board {
-        if  chrono::DateTime::parse_from_rfc3339(&board.timestamp).unwrap() > chrono::DateTime::parse_from_rfc3339(timestamp).unwrap() {
+        if chrono::DateTime::parse_from_rfc3339(&board.timestamp).unwrap()
+            > chrono::DateTime::parse_from_rfc3339(timestamp).unwrap()
+        {
             return Err(MyError {
                 message: "Timestamp is older than existing board".to_string(),
                 status: 409,
             });
-        }else{
-            client.collection::<Board>("boards").delete_one(doc! { "_id": key }, None).await.map_err(|_| MyError {
-                message: "Failed to delete board".to_string(),
-                status: 500,
-            })?;
+        } else {
+            client
+                .collection::<Board>("boards")
+                .delete_one(doc! { "_id": key }, None)
+                .await
+                .map_err(|_| MyError {
+                    message: "Failed to delete board".to_string(),
+                    status: 500,
+                })?;
         }
     }
-
 
     client
         .collection::<Board>("boards")
@@ -79,8 +125,8 @@ async fn save_board(key: &str, body: &str, timestamp: &str, sig: &str) -> Result
 
 pub async fn get_board(
     key: &str,
-    modified_since: Option<DateTime<FixedOffset>>,
-) -> Result<Board, MyError> {
+    modified_since: Option<DateTime<Utc>>,
+) -> Result<BoardDisplay, MyError> {
     let client = get_db_connection().await?;
     let filter = doc! { "_id": key };
     let board = client
@@ -93,7 +139,7 @@ pub async fn get_board(
         })?;
     match board {
         Some(board) => {
-            let last_modified = chrono::DateTime::parse_from_rfc3339(&board.last_modified).unwrap();
+            let last_modified:DateTime<Utc> = Utc.timestamp_millis_opt(board.last_modified).unwrap();
             if let Some(modified_since) = modified_since {
                 if last_modified <= modified_since {
                     return Err(MyError {
@@ -102,7 +148,7 @@ pub async fn get_board(
                     });
                 }
             }
-            Ok(board)
+            Ok(board.into())
         }
         None => {
             return Err(MyError {
@@ -113,7 +159,6 @@ pub async fn get_board(
     }
 }
 
-
 fn board_is_empty(document: &str) -> Result<bool, MyError> {
     let dom = tl::parse(document, tl::ParserOptions::default()).map_err(|_| MyError {
         message: "Failed to parse document".to_string(),
@@ -123,27 +168,35 @@ fn board_is_empty(document: &str) -> Result<bool, MyError> {
     return Ok(children.len() == 0);
 }
 
+pub async fn get_test_board() -> Result<BoardDisplay, MyError> {
+    let timestamp = chrono::Utc::now().to_rfc3339();
+    #[derive(Deserialize)]
+    struct RandomFact {
+        text: String,
+    }
 
-pub async fn get_test_board() -> Result<Board, MyError> {
-   
-   let timestamp = chrono::Utc::now().to_rfc3339();
-   #[derive(Deserialize)]
-   struct RandomFact {
-         text: String,
-   }
+    let random_fact = reqwest::get("https://uselessfacts.jsph.pl/random.json?language=en")
+        .await
+        .map_err(|_| MyError {
+            message: "Failed to get random fact for test board".to_string(),
+            status: 500,
+        })?
+        .json::<RandomFact>()
+        .await
+        .map_err(|_| MyError {
+            message: "Failed to parse random fact for test board".to_string(),
+            status: 500,
+        })?;
 
+    let random_color = format!(
+        "rgb({},{},{})",
+        rand::random::<u8>(),
+        rand::random::<u8>(),
+        rand::random::<u8>()
+    );
 
-   let random_fact = reqwest::get("https://uselessfacts.jsph.pl/random.json?language=en").await.map_err(|_| MyError {
-        message: "Failed to get random fact for test board".to_string(),
-        status: 500,
-    })?.json::<RandomFact>().await.map_err(|_| MyError {
-        message: "Failed to parse random fact for test board".to_string(),
-        status: 500,
-    })?;
-
-    let random_color = format!("rgb({},{},{})",rand::random::<u8>(),rand::random::<u8>(),rand::random::<u8>());
-
-   let body = format!(" \
+    let body = format!(
+        " \
     <time datetime=\"{}\"></time> \
     <div>
         <h1>This is a test board generated by the server</h1>
@@ -154,23 +207,52 @@ pub async fn get_test_board() -> Result<Board, MyError> {
 
         </div>
     </div>
-   ", timestamp,timestamp, random_fact.text, random_color
-   );
+   ",
+        timestamp, timestamp, random_fact.text, random_color
+    );
 
-   let public_key = "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583";
-   let secret_key = "3371f8b011f51632fea33ed0a3688c26a45498205c6097c352bd4d079d224419";
-   let keypair_string = format!("{}{}", secret_key, public_key); 
-   let keypair_bytes = hex::decode(keypair_string).unwrap();
-   let keypair: Keypair = Keypair::from_bytes(&keypair_bytes).unwrap();
-   let signature = keypair.sign(body.as_bytes());
-   let signature = hex::encode(signature.to_bytes());
+    let public_key = "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583";
+    let secret_key = "3371f8b011f51632fea33ed0a3688c26a45498205c6097c352bd4d079d224419";
+    let keypair_string = format!("{}{}", secret_key, public_key);
+    let keypair_bytes = hex::decode(keypair_string).unwrap();
+    let keypair: Keypair = Keypair::from_bytes(&keypair_bytes).unwrap();
+    let signature = keypair.sign(body.as_bytes());
+    let signature = hex::encode(signature.to_bytes());
 
-   let board : Board = Board{
+    let board: Board = Board {
         key: public_key.to_string(),
         body: body.to_string(),
         timestamp: chrono::Utc::now().to_rfc3339(),
-        last_modified: chrono::Utc::now().to_rfc3339(),
+        last_modified: chrono::Utc::now().timestamp(),
         signature: signature.to_string(),
+        orientation: Orientation::Portrait,
     };
-    Ok(board)
+    Ok(board.into())
+}
+
+
+pub async fn get_recently_updated_boards(limit: i64, skip: u64) -> Result<Vec<BoardDisplay>, MyError> {
+   
+
+    let client = get_db_connection().await?;
+    let options = FindOptions::builder()
+        .sort(doc! { "last_modified": -1 })
+        .limit(limit)
+        .skip(skip)
+        .build();
+    let mut boards = client
+        .collection::<Board>("boards")
+        .find(None, options)
+        .await
+        .map_err(|e| MyError {
+            message: format!("Failed to get boards: {}", e),
+            status: 500,
+        })?;
+    let mut boards_vec: Vec<BoardDisplay> = vec![];
+    while boards.advance().await.map_err(|e| MyError { message: format!("Failed to get boards: {}", e), status: 500, })? {
+        let board:Board = bson::from_bson(bson::Bson::Document(boards.current().to_raw_document_buf().to_document().unwrap().clone())).unwrap();
+        
+        boards_vec.push(board.into());
+    }
+    Ok(boards_vec)
 }

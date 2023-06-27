@@ -1,13 +1,49 @@
+use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
+
 use super::route_utils::handle_error;
 use crate::services::boards;
-use axum::extract::Path;
+use axum::Json;
+use axum::extract::{Path, Query};
 use axum::http::HeaderMap;
-use axum::response::{IntoResponse, Html};
+use axum::response::{Html, IntoResponse};
+use chrono::Utc;
 use hyper::StatusCode;
+use serde::{Deserialize, Serialize};
 
-pub async fn put_board(headers: HeaderMap, Path(key): Path<String>, body: String) -> impl IntoResponse {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Orientation {
+    Portrait,
+    Landscape,
+}
+
+impl Display for Orientation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Orientation::Portrait => write!(f, "portrait"),
+            Orientation::Landscape => write!(f, "landscape"),
+        }
+    }
+}
+
+impl From<String> for Orientation {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "portrait" => Orientation::Portrait,
+            "landscape" => Orientation::Landscape,
+            _ => Orientation::Portrait,
+        }
+    }
+}
+
+pub async fn put_board(
+    headers: HeaderMap,
+    Path(key): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+    body: String,
+) -> impl IntoResponse {
     // Special key to allow for testing
-    if key == "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583"{
+    if key == "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583" {
         return (StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
     }
 
@@ -19,25 +55,36 @@ pub async fn put_board(headers: HeaderMap, Path(key): Path<String>, body: String
         None => return (StatusCode::UNAUTHORIZED, "Missing signature").into_response(),
     };
 
-    match boards::put_board(key, signature, body).await {
+    let orientation = match params.get("orientation") {
+        Some(orientation) => Orientation::from(orientation.to_string()),
+        None => Orientation::Portrait,
+    };
+
+    match boards::put_board(key, signature, orientation, &body).await {
         Ok(_) => (StatusCode::OK, "OK").into_response(),
         Err(e) => handle_error(e).into_response(),
     }
 }
 
-
 pub async fn get_board(headers: HeaderMap, Path(key): Path<String>) -> impl IntoResponse {
-    if key == "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583"{
+    if key == "ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583" {
         match boards::get_test_board().await {
             Ok(board) => {
                 let mut response = (StatusCode::OK, Html(board.body)).into_response();
-                response.headers_mut()
+                response
+                    .headers_mut()
                     .insert("Last-Modified", board.last_modified.parse().unwrap());
-                response.headers_mut()
+                response
+                    .headers_mut()
                     .insert("Spring-Signature", board.signature.parse().unwrap());
+                response.headers_mut().insert(
+                    "Orientation",
+                    board.orientation.to_string().parse().unwrap(),
+                );
+
                 return response;
             }
-            Err(e) => return handle_error(e).into_response()
+            Err(e) => return handle_error(e).into_response(),
         }
     }
 
@@ -45,22 +92,38 @@ pub async fn get_board(headers: HeaderMap, Path(key): Path<String>) -> impl Into
         Some(date) => {
             let date = date.to_str().unwrap();
             match chrono::DateTime::parse_from_rfc3339(date) {
-                Ok(date) => Some(date),
-                Err(_) => return (StatusCode::BAD_REQUEST, "Date must be ISO8601 format").into_response(),
+                Ok(date) => Some(date.with_timezone(&Utc)),
+                Err(_) => {
+                    return (StatusCode::BAD_REQUEST, "Date must be ISO8601 format").into_response()
+                }
             }
         }
-        None => None
+        None => None,
     };
 
     match boards::get_board(&key, last_modified).await {
         Ok(board) => {
             let mut response = (StatusCode::OK, Html(board.body)).into_response();
-            response.headers_mut()
+            response
+                .headers_mut()
                 .insert("Last-Modified", board.last_modified.parse().unwrap());
-            response.headers_mut()
+            response
+                .headers_mut()
                 .insert("Spring-Signature", board.signature.parse().unwrap());
+            response.headers_mut().insert(
+                "Orientation",
+                board.orientation.to_string().parse().unwrap(),
+            );
             response
         }
+        Err(e) => handle_error(e).into_response(),
+    }
+}
+
+
+pub async fn get_recent_boards() -> impl IntoResponse {
+    match boards::get_recently_updated_boards(5, 0).await {
+        Ok(board_list) => (StatusCode::OK, Json(board_list)).into_response(),
         Err(e) => handle_error(e).into_response(),
     }
 }
