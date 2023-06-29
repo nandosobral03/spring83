@@ -16,6 +16,7 @@
 		"@sveltejs/kit": "^1.20.4",
 		"@types/dompurify": "^3.0.2",
 		"@types/masonry-layout": "^4.2.5",
+		"@types/prismjs": "^1.26.0",
 		"@typescript-eslint/eslint-plugin": "^5.45.0",
 		"@typescript-eslint/parser": "^5.45.0",
 		"eslint": "^8.28.0",
@@ -35,6 +36,7 @@
 		"dompurify": "^3.0.3",
 		"masonry-layout": "^4.2.2",
 		"moment": "^2.29.4",
+		"prismjs": "^1.29.0",
 		"sass": "^1.63.6"
 	}
 }

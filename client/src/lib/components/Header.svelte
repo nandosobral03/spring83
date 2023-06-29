@@ -25,6 +25,7 @@
 <style lang="scss">
 		* {
 			box-sizing: border-box;
+			font-family: 'EB Garamond', serif;
 		}
 
 	header {

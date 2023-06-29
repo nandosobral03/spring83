@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import CreateBoard from '$lib/components/CreateBoard.svelte';
 	import type { Board } from '$lib/models/board.model';
 	import DOMPurify from 'dompurify';
 
 	let shadowHost: HTMLElement;
-    let shadowRoot: ShadowRoot;
+	let shadowRoot: ShadowRoot;
 	let board: Board = {
 		body: '',
 		timestamp: '',
@@ -14,12 +15,12 @@
 		public_key: ''
 	};
 
-    $: {
-        if(browser && shadowHost){
-            if(!shadowRoot) shadowRoot = shadowHost.attachShadow({ mode: 'open' });
-            const clean = DOMPurify.sanitize(board.body, {FORBID_TAGS: ['img', 'video']});
-    
-            shadowRoot.innerHTML = `
+	$: {
+		if (browser && shadowHost) {
+			if (!shadowRoot) shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+			const clean = DOMPurify.sanitize(board.body, { FORBID_TAGS: ['img', 'video'] });
+
+			shadowRoot.innerHTML = `
             <style>
                 :host {
                     position: relative;
@@ -31,27 +32,25 @@
                 p, h1, h2, h3, h4, h5 { margin: 0 0 2rem 0; }
             </style>
             ${clean}`; // Use template literals (backticks) to insert variables
-            console.log(shadowRoot.innerHTML);
-        }
-    }
-
+			console.log(shadowRoot.innerHTML);
+		}
+	}
 </script>
 
 <div>
-	<section class="form">
-		<select bind:value={board.orientation}>
-			<option>Portrait</option>
-			<option>Landscape</option>
-		</select>
-		<textarea bind:value={board.body} on:input={() => board = board} />
-	</section>
+	<CreateBoard bind:board />
 
 	<section class="preview">
 		<article
 			bind:this={shadowHost}
-			style={board.orientation === 'Landscape'
-				? 'max-width:500px; min-width: 500px; max-height: 350px; min-height: 350px'
-				: 'max-height: 500px ; min-height: 500px; max-width: 350px; min-width: 350px'}
+			style={`border: 1px solid black; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
+		
+			${
+				board.orientation === 'Landscape'
+					? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
+					: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
+			}
+		`}
 		/>
 	</section>
 </div>
@@ -80,11 +79,5 @@
 		justify-content: center;
 		align-items: center;
 	}
-
-    article {
-		border: 1px solid black;
-		overflow: hidden;
-        display: flex;
-		margin: 0.25rem;
-    }
 </style>
+
