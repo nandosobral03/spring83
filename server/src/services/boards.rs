@@ -256,3 +256,16 @@ pub async fn get_recently_updated_boards(limit: i64, skip: u64) -> Result<Vec<Bo
     }
     Ok(boards_vec)
 }
+
+pub async fn get_boards_count() -> Result<u64, MyError> {
+    let client = get_db_connection().await?;
+    let count = client
+        .collection::<Board>("boards")
+        .count_documents(None, None)
+        .await
+        .map_err(|e| MyError {
+            message: format!("Failed to get boards count: {}", e),
+            status: 500,
+        })?;
+    Ok(count)
+}

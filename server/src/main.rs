@@ -33,6 +33,7 @@ async fn main() {
         .route("/auth/login", post(routes::auth_routes::sign_in))
         .route("/auth", delete(routes::auth_routes::remove_user))
         .route("/boards", get(routes::boards_routes::get_recent_boards))
+        .route("/boards/count", get(routes::boards_routes::get_boards_count))
         .layer(axum::middleware::from_fn(propagate_header));
     // Start the server
     let addr = ("127.0.0.1:".to_string() + &port).parse().unwrap();

@@ -127,3 +127,10 @@ pub async fn get_recent_boards() -> impl IntoResponse {
         Err(e) => handle_error(e).into_response(),
     }
 }
+
+pub async fn get_boards_count() -> impl IntoResponse {
+    match boards::get_boards_count().await {
+        Ok(count) => (StatusCode::OK, Json(count)).into_response(),
+        Err(e) => handle_error(e).into_response(),
+    }
+}
