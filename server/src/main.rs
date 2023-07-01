@@ -8,6 +8,7 @@ use axum::{
 };
 
 use hyper::{Method, Request, StatusCode};
+use tower_http::cors::{CorsLayer, Any};
 
 mod routes;
 mod services;
@@ -34,7 +35,13 @@ async fn main() {
         .route("/auth", delete(routes::auth_routes::remove_user))
         .route("/boards", get(routes::boards_routes::get_recent_boards))
         .route("/boards/count", get(routes::boards_routes::get_boards_count))
-        .layer(axum::middleware::from_fn(propagate_header));
+        // cors
+        .layer(
+            CorsLayer::new()
+                .allow_methods([Method::GET, Method::PUT, Method::DELETE, Method::OPTIONS, Method::POST])
+                .allow_origin(Any)
+                .allow_headers(Any)
+        );
     // Start the server
     let addr = ("127.0.0.1:".to_string() + &port).parse().unwrap();
     Server::bind(&addr)

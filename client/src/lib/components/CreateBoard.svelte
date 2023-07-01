@@ -126,7 +126,7 @@
 	#highlighting,
 	#highlighting * {
 		/* Also add text styles to highlighing tokens */
-		font-size: 15pt;
+		font-size: 10pt;
 		font-family: monospace;
 		line-height: 1.5;
 		tab-size: 2;

@@ -31,6 +31,7 @@
 	header {
 		width: 100%;
 		padding: 1rem 2rem;
+		position: sticky;
 	}
     h1{
         user-select: none;

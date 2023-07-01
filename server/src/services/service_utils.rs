@@ -113,6 +113,8 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
 
 pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(), MyError> {
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
+    println!("public key: {:?}", public_key);
+    println!("signature: {:?}", sig);
     let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
 
     public_key

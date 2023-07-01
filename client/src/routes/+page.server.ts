@@ -6,6 +6,12 @@ export const load = async () => {
     
     let test_board:Board = {
         body: `
+        <style>
+            :host {
+                background-color: #000;
+            }
+        </style>
+        
         <div style="color: black; font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; margin: 0; padding: 0;">
             <div style="margin: 0 auto; max-width: 600px;">
                 <div style="padding: 20px 0;">
