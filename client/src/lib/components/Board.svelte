@@ -6,9 +6,7 @@
 	export let board: Board;
 	let shadowHost: HTMLElement;
 	let shadowRoot: ShadowRoot;
-	onMount(() => {
-	
-	});
+	onMount(() => {});
 
 	$: {
 		if (browser && shadowHost) {
@@ -30,22 +28,24 @@
 			console.log(shadowRoot.innerHTML);
 		}
 	}
-
-
 </script>
 
-<article
-	bind:this={shadowHost}
-	style={`border: 1px solid black; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
+<div
+	style={`border: 1px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
+			position: relative !important;
 	
-		${
-			board.orientation === 'Landscape'
-				? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
-				: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
-		}
-	`}
+	${
+		board.orientation === 'Landscape'
+			? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
+			: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
+	}`}
 	class={board.orientation === 'Landscape' ? 'masonry-item wide' : 'masonry-item tall'}
-/>
+>
+	<article
+		bind:this={shadowHost}
+		style="min-width: 100%; min-height: 100%;"
+	/>
+</div>
 
 <style lang="scss">
 	* {

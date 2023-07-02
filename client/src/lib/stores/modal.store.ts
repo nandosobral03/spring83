@@ -1,0 +1,39 @@
+import { writable } from 'svelte/store'
+
+export type ModalModel = {
+    title: string,
+    component: SvelteComponent,
+    props: any
+}
+
+export const currentModalStore = writable<ModalModel>(null)
+
+
+const createModalStore = () => {
+    const { subscribe, set, update } = writable<ModalModel[]>([])
+    let modals = []
+    return {
+        subscribe,
+        add: (modal: ModalModel) => {
+            update(modals => [...modals, modal])
+            modals.push(modal)
+            currentModalStore.set(modal)
+        },
+        pop: () => {
+            update(modals => modals.slice(0, -1))
+            modals.pop()
+            console.log(modals[modals.length - 1])
+            currentModalStore.set(modals[modals.length - 1])
+        },
+        clear: () => {
+            set([])
+            modals = []
+            currentModalStore.set(null)
+        }
+    }
+}
+
+
+export const modalStore  = createModalStore()
+
+export default { modalStore, currentModalStore }

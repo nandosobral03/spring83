@@ -6,6 +6,8 @@
 	import moment from 'moment';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import axios from 'axios';
+	import {modalStore} from '$lib/stores/modal.store';
+	import SignBoard from '$lib/components/SignBoard.svelte';
 
 	let board: Board = {
 		body: '',
@@ -32,30 +34,36 @@
 	}
 
 	const signBoard = async (board: Board) => {
-		const privateKeyString = '';
-		const publicKeyString = '';
-		const hexBytes = decodeHexStringToByteArray(privateKeyString + publicKeyString);
-		const keypairBytes = new Uint8Array(hexBytes);
-		let keypair = nacl.sign.keyPair.fromSecretKey(keypairBytes);
-		const timestamp = `<time datetime="${moment().format('YYYY-MM-DDTHH:mm:ss')}Z"></time>`; 
-		const newBody = `${timestamp}${board.body}`;
-		const secretMessage = new TextEncoder().encode(newBody);
-		const signature = nacl.sign.detached(secretMessage, keypair.secretKey);
-		console.log(signature);
-		const hexSignature = toHexString(signature);
-		console.log(hexSignature.length);
-		board.signature = hexSignature;
-
-		const response = await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
-			headers: {
-				'Content-Type': 'text/html',
-				'Spring-Signature': hexSignature
-			},
-			params: {
-				orientation: board.orientation.toLowerCase()
+		modalStore.add({
+			component: SignBoard,
+			title: 'Sign Board',
+			props: {
+				board: board
 			}
 		});
-		console.log(response);
+		// const privateKeyString = '';
+		// const publicKeyString = '';
+		// const hexBytes = decodeHexStringToByteArray(privateKeyString + publicKeyString);
+		// const keypairBytes = new Uint8Array(hexBytes);
+		// let keypair = nacl.sign.keyPair.fromSecretKey(keypairBytes);
+		// const timestamp = `<time datetime="${moment().format('YYYY-MM-DDTHH:mm:ss')}Z"></time>`; 
+		// const newBody = `${timestamp}${board.body}`;
+		// const secretMessage = new TextEncoder().encode(newBody);
+		// const signature = nacl.sign.detached(secretMessage, keypair.secretKey);
+		// console.log(signature);
+		// const hexSignature = toHexString(signature);
+		// console.log(hexSignature.length);
+		// board.signature = hexSignature;
+
+		// const response = await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
+		// 	headers: {
+		// 		'Content-Type': 'text/html',
+		// 		'Spring-Signature': hexSignature
+		// 	},
+		// 	params: {
+		// 		orientation: board.orientation.toLowerCase()
+		// 	}
+		// });
 	};
 </script>
 
@@ -109,5 +117,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		background-color: var(--text);
+		aspect-ratio: 1/1;
 	}
 </style>
