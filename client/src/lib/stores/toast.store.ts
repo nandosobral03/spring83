@@ -32,5 +32,3 @@ const createToastStore = () => {
 }
 
 export const toastStore = createToastStore();
-
-export default toastStore;

@@ -3,6 +3,7 @@ import { API_URL } from "$env/static/private"
 export const load = async ({ params }) => {
     const board = await fetch(`${API_URL}/${params.id}`)
     const body = await board.text()
+    console.log(body)
     return {
         body: body,
         orientation: board.headers.get("orientation"),

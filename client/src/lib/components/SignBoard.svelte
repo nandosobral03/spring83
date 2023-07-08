@@ -9,7 +9,7 @@
 	import { onMount } from 'svelte';
 	import axios from 'axios';
 	import { loadingStore } from '$lib/stores/loading.store';
-	import toastStore from '$lib/stores/toast.store';
+	import { toastStore } from '$lib/stores/toast.store';
 	import { refreshBoardCount } from '$lib/stores/board_count.store';
 
 	export let board: Board;
@@ -39,14 +39,13 @@
 				await signBoard(board, fullKey);
 			}
 			modalStore.pop();
-			toastStore.addToast({
-				title: 'Success',
-				text: 'Board published successfully',
-				type: 'success'
-			});
 			refreshBoardCount();
-		} catch (e) {
-			console.log(e);
+		} catch (e: any) {
+			toastStore.addToast({
+				title: 'Error',
+				text: e?.response?.data || 'Something went wrong',
+				type: 'error'
+			});
 		} finally {
 			loadingStore.set(false);
 		}
@@ -77,7 +76,6 @@
 
 	const signBoard = async (board: Board, fullKey: string) => {
 		let publicKeyString = fullKey.substring(64);
-		console.log(publicKeyString);
 		const hexBytes = decodeHexStringToByteArray(fullKey);
 		const keypairBytes = new Uint8Array(hexBytes);
 		let keypair = nacl.sign.keyPair.fromSecretKey(keypairBytes);
@@ -85,9 +83,7 @@
 		const newBody = `${timestamp}${board.body}`;
 		const secretMessage = new TextEncoder().encode(newBody);
 		const signature = nacl.sign.detached(secretMessage, keypair.secretKey);
-		console.log(signature);
 		const hexSignature = toHexString(signature);
-		console.log(hexSignature.length);
 		board.signature = hexSignature;
 
 		const response = await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
@@ -99,7 +95,12 @@
 				orientation: board.orientation.toLowerCase()
 			}
 		});
-		console.log(response);
+
+		toastStore.addToast({
+			title: 'Success',
+			text: 'Board published successfully',
+			type: 'success'
+		});
 	};
 </script>
 
@@ -121,7 +122,7 @@
 	<section>
 		{#if tab === 'login'}
 			<div class="input-group">
-				<input type="text" placeholder="Email" bind:value={email} />
+				<input type="text" placeholder="Username" bind:value={email} />
 				<input type="password" placeholder="Password" bind:value={password} />
 			</div>
 			<div class="button-group">

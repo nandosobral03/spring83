@@ -36,5 +36,3 @@ const createModalStore = () => {
 
 
 export const modalStore = createModalStore()
-
-export default { modalStore, currentModalStore }

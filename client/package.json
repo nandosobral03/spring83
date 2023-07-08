@@ -33,6 +33,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@lottiefiles/lottie-player": "^2.0.2",
 		"@noble/ed25519": "^2.0.0",
 		"axios": "^1.4.0",
 		"buffer": "^6.0.3",

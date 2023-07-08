@@ -17,7 +17,7 @@
 
 	const signBoard = async () => {
 		modalStore.add({
-			title: 'Register',
+			title: 'Sign & Publish',
 			component: SignBoard,
 			props: { board }
 		});
@@ -31,7 +31,7 @@
 			<BoardComponent bind:board />
 		</section>
 	</div>
-	<Button action={() => signBoard()} text="Sign and Submit" style="flex-grow: 1;" />
+	<Button action={() => signBoard()} text="Sign and Publish" style="flex-grow: 1;" />
 </div>
 
 <style lang="scss">
