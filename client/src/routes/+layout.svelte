@@ -1,16 +1,28 @@
 <script lang="ts">
 	import Header from '$lib/components/Header.svelte';
 	import Modal from '$lib/components/Modal.svelte';
-	import {modalStore} from '$lib/stores/modal.store';
+	import { boardCountStore } from '$lib/stores/board_count.store';
+	import { loadingStore } from '$lib/stores/loading.store';
+	import { modalStore } from '$lib/stores/modal.store';
+	import { onMount } from 'svelte';
 	import type { LayoutServerData } from './$types';
-	export let data : LayoutServerData
+	export let data: LayoutServerData;
+
+	onMount(() => {
+		boardCountStore.set(data.board_count);
+	});
 </script>
 
 <main>
-	<Header count={data.board_count} />
+	<Header />
 	<slot />
 	{#if $modalStore != null}
-		<Modal/>
+		<Modal />
+	{/if}
+	{#if $loadingStore}
+		<div class="loading">
+			<div class="spinner" />
+		</div>
 	{/if}
 </main>
 

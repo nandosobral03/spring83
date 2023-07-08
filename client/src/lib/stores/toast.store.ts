@@ -1,19 +1,27 @@
 import { writable } from "svelte/store";
 
 type ToastModel = {
-    kind: "success" | "error" | "warning" | "info",
+    type: "success" | "error" | "warning" | "info",
     title: string,
     text: string,
     timestamp: number
+}
+
+type CreateToast = {
+    type: "success" | "error" | "warning" | "info",
+    title: string,
+    text: string,
+    duration?: number
 }
 
 
 const createToastStore = () => {
     let state = writable<ToastModel[]>([]);
     return {
-        addToast: ((kind: "success" | "error" | "warning" | "info", title: string, text: string, duration: number = 2000) => {
+        addToast: (toast: CreateToast) => new Promise((resolve, reject) => {
+            let { type, title, text, duration = 2000 } = toast;
             let timestamp = new Date().getTime();
-            state.update(x => [...x, { kind, title, text, timestamp }]);
+            state.update(x => [...x, { type, title, text, timestamp }]);
             console.log(state);
             setTimeout(() => {
                 state.update(x => x.filter(y => y.timestamp !== timestamp));

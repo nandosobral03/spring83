@@ -6,9 +6,12 @@ use super::{
         get_db_connection, validate_key, validate_signature, validate_timestamp, MyError,
     },
 };
-use chrono::{DateTime, Utc, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use ed25519_dalek::*;
-use mongodb::{bson::{doc, self}, options::{FindOptions}};
+use mongodb::{
+    bson::{self, doc},
+    options::FindOptions,
+};
 use serde::{Deserialize, Serialize};
 
 pub async fn put_board(
@@ -49,22 +52,27 @@ pub struct BoardDisplay {
     pub last_modified: String,
     pub signature: String,
     pub orientation: Orientation,
+    pub key: String,
 }
 
 impl From<Board> for BoardDisplay {
     fn from(board: Board) -> Self {
-       let last_modified = chrono::Utc.timestamp_millis_opt(board.last_modified).unwrap().to_rfc3339().parse().unwrap();
+        let last_modified = chrono::Utc
+            .timestamp_millis_opt(board.last_modified)
+            .unwrap()
+            .to_rfc3339()
+            .parse()
+            .unwrap();
         BoardDisplay {
             body: board.body,
             timestamp: board.timestamp,
             last_modified,
             signature: board.signature,
             orientation: board.orientation,
+            key: board.key,
         }
     }
 }
-
-
 
 async fn save_board(
     key: &str,
@@ -139,7 +147,8 @@ pub async fn get_board(
         })?;
     match board {
         Some(board) => {
-            let last_modified:DateTime<Utc> = Utc.timestamp_millis_opt(board.last_modified).unwrap();
+            let last_modified: DateTime<Utc> =
+                Utc.timestamp_millis_opt(board.last_modified).unwrap();
             if let Some(modified_since) = modified_since {
                 if last_modified <= modified_since {
                     return Err(MyError {
@@ -230,10 +239,10 @@ pub async fn get_test_board() -> Result<BoardDisplay, MyError> {
     Ok(board.into())
 }
 
-
-pub async fn get_recently_updated_boards(limit: i64, skip: u64) -> Result<Vec<BoardDisplay>, MyError> {
-   
-
+pub async fn get_recently_updated_boards(
+    limit: i64,
+    skip: u64,
+) -> Result<Vec<BoardDisplay>, MyError> {
     let client = get_db_connection().await?;
     let options = FindOptions::builder()
         .sort(doc! { "last_modified": -1 })
@@ -249,9 +258,20 @@ pub async fn get_recently_updated_boards(limit: i64, skip: u64) -> Result<Vec<Bo
             status: 500,
         })?;
     let mut boards_vec: Vec<BoardDisplay> = vec![];
-    while boards.advance().await.map_err(|e| MyError { message: format!("Failed to get boards: {}", e), status: 500, })? {
-        let board:Board = bson::from_bson(bson::Bson::Document(boards.current().to_raw_document_buf().to_document().unwrap().clone())).unwrap();
-        
+    while boards.advance().await.map_err(|e| MyError {
+        message: format!("Failed to get boards: {}", e),
+        status: 500,
+    })? {
+        let board: Board = bson::from_bson(bson::Bson::Document(
+            boards
+                .current()
+                .to_raw_document_buf()
+                .to_document()
+                .unwrap()
+                .clone(),
+        ))
+        .unwrap();
+
         boards_vec.push(board.into());
     }
     Ok(boards_vec)

@@ -100,7 +100,7 @@ pub async fn sign_in(user_login: SignInRequest) -> Result<String, MyError> {
         });
     }
 
-    Ok(user.private_key)
+    Ok(format!("{}{}", user.private_key, user.public_key))
 }
 
 pub async fn remove_user(user_login: SignInRequest) -> Result<(), MyError> {

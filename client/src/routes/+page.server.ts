@@ -2,9 +2,9 @@ import { API_URL } from "$env/static/private"
 import type { Board } from "$lib/models/board.model"
 
 export const load = async () => {
-    const recent_boards = await(await fetch(`${API_URL}/boards`).then(res => res.json()))
-    
-    let test_board:Board = {
+    const recent_boards = await (await fetch(`${API_URL}/boards`).then(res => res.json()))
+    console.log(recent_boards)
+    let test_board: Board = {
         body: `
         <style>
             :host {
@@ -33,7 +33,7 @@ export const load = async () => {
         last_modified: "",
         signature: "",
         orientation: "Portrait",
-        public_key: ""
+        key: ""
     }
 
     test_board.orientation = Math.random() > 0.5 ? "Portrait" : "Landscape"

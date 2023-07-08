@@ -4,5 +4,5 @@ export type Board = {
   last_modified: string;
   signature: string;
   orientation: string;
-  public_key: string;
+  key: string;
 }

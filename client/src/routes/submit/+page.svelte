@@ -1,13 +1,10 @@
 <script lang="ts">
 	import BoardComponent from '$lib/components/Board.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import CreateBoard from '$lib/components/CreateBoard.svelte';
-	import type { Board } from '$lib/models/board.model';
-	import nacl from 'tweetnacl';
-	import moment from 'moment';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import axios from 'axios';
-	import {modalStore} from '$lib/stores/modal.store';
 	import SignBoard from '$lib/components/SignBoard.svelte';
+	import type { Board } from '$lib/models/board.model';
+	import { modalStore } from '$lib/stores/modal.store';
 
 	let board: Board = {
 		body: '',
@@ -15,55 +12,15 @@
 		last_modified: '',
 		signature: '',
 		orientation: 'Portrait',
-		public_key: ''
+		key: ''
 	};
 
-	const decodeHexStringToByteArray = (hexString: string) => {
-		var result = [];
-		while (hexString.length >= 2) {
-			result.push(parseInt(hexString.substring(0, 2), 16));
-			hexString = hexString.substring(2, hexString.length);
-		}
-		return result;
-	};
-
-	function toHexString(byteArray: Uint8Array) {
-		return Array.from(byteArray, function (byte) {
-			return ('0' + (byte & 0xff).toString(16)).slice(-2);
-		}).join('');
-	}
-
-	const signBoard = async (board: Board) => {
+	const signBoard = async () => {
 		modalStore.add({
+			title: 'Register',
 			component: SignBoard,
-			title: 'Sign Board',
-			props: {
-				board: board
-			}
+			props: { board }
 		});
-		// const privateKeyString = '';
-		// const publicKeyString = '';
-		// const hexBytes = decodeHexStringToByteArray(privateKeyString + publicKeyString);
-		// const keypairBytes = new Uint8Array(hexBytes);
-		// let keypair = nacl.sign.keyPair.fromSecretKey(keypairBytes);
-		// const timestamp = `<time datetime="${moment().format('YYYY-MM-DDTHH:mm:ss')}Z"></time>`; 
-		// const newBody = `${timestamp}${board.body}`;
-		// const secretMessage = new TextEncoder().encode(newBody);
-		// const signature = nacl.sign.detached(secretMessage, keypair.secretKey);
-		// console.log(signature);
-		// const hexSignature = toHexString(signature);
-		// console.log(hexSignature.length);
-		// board.signature = hexSignature;
-
-		// const response = await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
-		// 	headers: {
-		// 		'Content-Type': 'text/html',
-		// 		'Spring-Signature': hexSignature
-		// 	},
-		// 	params: {
-		// 		orientation: board.orientation.toLowerCase()
-		// 	}
-		// });
 	};
 </script>
 
@@ -74,34 +31,26 @@
 			<BoardComponent bind:board />
 		</section>
 	</div>
-	<button on:click={() => signBoard(board)}> Sign and Submit </button>
+	<Button action={() => signBoard()} text="Sign and Submit" style="flex-grow: 1;" />
 </div>
 
 <style lang="scss">
 	* {
 		box-sizing: border-box;
 	}
-
-	button {
-		width: 90%;
-		height: 50px;
-		border: 1px solid black;
-	}
-
 	.container {
 		width: 100%;
-		height: 100%;
+		min-height: 90%;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		justify-content: space-between;
 		align-items: center;
 		padding: 1rem;
 		gap: 1rem;
 	}
-
 	.preview_container {
-		width: 90%;
-		height: 100%;
+		width: 100%;
+		height: 90%;
 		display: flex;
 		justify-content: center;
 		gap: 10px;
@@ -109,7 +58,6 @@
 
 	section {
 		width: 50%;
-		height: 100%;
 		border: 1px solid black;
 	}
 
@@ -119,5 +67,6 @@
 		align-items: center;
 		background-color: var(--text);
 		aspect-ratio: 1/1;
+		border-radius: 3px;
 	}
 </style>

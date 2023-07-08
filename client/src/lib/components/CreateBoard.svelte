@@ -11,9 +11,7 @@
 			text += ' ';
 		}
 		// Update code
-		result_element.innerHTML = text
-			.replace(new RegExp('&', 'g'), '&amp;')
-			.replace(new RegExp('<', 'g'), '&lt;'); /* Global RegExp */
+		result_element.innerHTML = text.replace(new RegExp('&', 'g'), '&amp;').replace(new RegExp('<', 'g'), '&lt;'); /* Global RegExp */
 		// Syntax Highlight
 		Prism.highlightElement(result_element);
 	}
@@ -51,8 +49,7 @@
 		on:change={() => {
 			update(textArea.value);
 			sync_scroll(textArea);
-		}}
-	>
+		}}>
 		<option value="Portrait">Portrait</option>
 		<option value="Landscape">Landscape</option>
 	</select>
@@ -68,8 +65,7 @@
 			on:scroll={() => sync_scroll(textArea)}
 			on:keydown={(e) => check_tab(textArea, e)}
 			bind:this={textArea}
-			bind:value={board.body}
-		/>
+			bind:value={board.body} />
 		<pre id="highlighting" aria-hidden="true">
 			<code class="language-html" id="highlighting-content" />
 		</pre>
@@ -77,13 +73,16 @@
 </section>
 
 <style lang="scss">
+	* {
+		box-sizing: border-box;
+	}
 	select {
 		width: 100%;
 		padding: 1rem;
 		gap: 1rem;
 		background-color: var(--text);
 		color: var(--background);
-		option{
+		option {
 			background-color: var(--text);
 			color: var(--background);
 		}
@@ -97,6 +96,7 @@
 		padding: 1rem;
 		gap: 1rem;
 		background-color: var(--text);
+		border-radius: 3px;
 	}
 	code {
 		display: block;

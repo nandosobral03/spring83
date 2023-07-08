@@ -1,17 +1,18 @@
+import type { SvelteComponent } from 'svelte'
 import { writable } from 'svelte/store'
 
 export type ModalModel = {
     title: string,
-    component: SvelteComponent,
+    component: any,
     props: any
 }
 
-export const currentModalStore = writable<ModalModel>(null)
+export const currentModalStore = writable<ModalModel | null>(null)
 
 
 const createModalStore = () => {
     const { subscribe, set, update } = writable<ModalModel[]>([])
-    let modals = []
+    let modals: ModalModel[] = []
     return {
         subscribe,
         add: (modal: ModalModel) => {
@@ -34,6 +35,6 @@ const createModalStore = () => {
 }
 
 
-export const modalStore  = createModalStore()
+export const modalStore = createModalStore()
 
 export default { modalStore, currentModalStore }

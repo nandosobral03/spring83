@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { boardCountStore } from '$lib/stores/board_count.store';
 	import moment from 'moment';
-	export let count: number;
 </script>
 
 <header>
@@ -12,9 +12,9 @@
 		</nav>
 		<div class="current_info">
 			<span>
-				Currently Hosting: {count}
-				{#if count > 0}
-					{count > 1 ? 'boards' : 'board'}
+				Currently Hosting: {$boardCountStore}
+				{#if $boardCountStore > 0}
+					{$boardCountStore > 1 ? 'boards' : 'board'}
 				{/if}
 			</span>
 			<div class="current_time">
