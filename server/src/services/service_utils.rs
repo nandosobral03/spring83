@@ -182,12 +182,10 @@ pub fn create_jwt(username: &str) -> Result<String, MyError> {
 }
 
 pub fn decode_jwt(token: &str) -> Result<Claims, MyError> {
-    println!("Token {}", token);
     let secret = env::var("JWT_SECRET").map_err(|_| MyError {
         message: "Failed to read JWT_SECRET from .env file".to_string(),
         status: 500,
     })?;
-    println!("Token {}", token);
     let token = jsonwebtoken::decode::<Claims>(
         token,
         &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),

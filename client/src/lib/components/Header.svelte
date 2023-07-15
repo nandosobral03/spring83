@@ -11,12 +11,12 @@
 <header>
 	<div class="nav_info">
 		<nav>
-			<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
-			<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
-			<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
 			{#if $userStore}
 				<a href="/following" class:active={$page.url.pathname === '/following'}>Following</a>
 			{/if}
+			<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
+			<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
+			<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
 		</nav>
 		<div class="current_info">
 			<span>

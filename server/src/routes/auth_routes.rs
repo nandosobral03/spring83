@@ -44,12 +44,18 @@ pub async fn remove_user_keys(Json(body): Json<SignInRequest>) -> impl IntoRespo
     }
 }
 
+pub async fn get_user_assigned_keys(Json(body): Json<SignInRequest>) -> impl IntoResponse {
+    match auth::get_user_assigned_keys(body).await {
+        Ok(keys) => (StatusCode::OK, Json(keys)).into_response(),
+        Err(e) => handle_error(e).into_response(),
+    }
+}
+
 pub async fn follow_key(headers: HeaderMap, Path(key): Path<String>) -> impl IntoResponse {
     let auth = match headers.get("Authorization") {
         Some(auth) => auth.to_str().unwrap().to_string(),
         None => return (StatusCode::UNAUTHORIZED, "Missing auth header").into_response(),
     };
-    println!("{:?}", auth);
     let decoded_jwt = decode_jwt(&auth);
     match decoded_jwt {
         Ok(decoded_jwt) => match auth::follow_key(decoded_jwt.sub, key).await {

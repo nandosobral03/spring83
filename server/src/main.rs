@@ -33,7 +33,11 @@ async fn main() {
         .route("/auth", post(routes::auth_routes::sign_up))
         .route("/auth/login", post(routes::auth_routes::sign_in))
         .route("/auth", delete(routes::auth_routes::remove_user))
-        .route("/auth/keys", post(routes::auth_routes::assign_keys_to_user))
+        .route("/auth/keys", put(routes::auth_routes::assign_keys_to_user))
+        .route(
+            "/auth/keys",
+            post(routes::auth_routes::get_user_assigned_keys),
+        )
         .route("/auth/keys", delete(routes::auth_routes::remove_user_keys))
         .route(
             "/boards/feed",

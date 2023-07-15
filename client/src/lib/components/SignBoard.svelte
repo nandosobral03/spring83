@@ -11,6 +11,7 @@
 	import { loadingStore } from '$lib/stores/loading.store';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { refreshBoardCount } from '$lib/stores/board_count.store';
+	import AssignKeys from './AssignKeys.svelte';
 
 	export let board: Board;
 
@@ -28,12 +29,12 @@
 		try {
 			loadingStore.set(true);
 			if (tab === 'login') {
-				const response = await axios.post(`${PUBLIC_API_URL}/auth/login`, {
+				const response = await axios.post(`${PUBLIC_API_URL}/auth/keys`, {
 					email,
 					password
 				});
-				const fullKey = response.data;
-				await signBoard(board, fullKey);
+				const { private_key, public_key } = response.data;
+				await signBoard(board, `${private_key}${public_key}`);
 			} else {
 				const fullKey = `${privateKey}${publicKey}`;
 				await signBoard(board, fullKey);
@@ -59,6 +60,14 @@
 		});
 	};
 
+	const assignKeys = () => {
+		modalStore.add({
+			title: 'Associate keypair',
+			component: AssignKeys,
+			props: {}
+		});
+	};
+
 	const decodeHexStringToByteArray = (hexString: string) => {
 		var result = [];
 		while (hexString.length >= 2) {
@@ -80,7 +89,7 @@
 		const keypairBytes = new Uint8Array(hexBytes);
 		let keypair = nacl.sign.keyPair.fromSecretKey(keypairBytes);
 		const timestamp = `<time datetime="${moment().format('YYYY-MM-DDTHH:mm:ss')}Z"></time>`;
-		const newBody = `${timestamp}${board.body}`;
+		const newBody = board.body.trim().length !== 0 ? `${timestamp}\n${board.body}` : `${timestamp}${board.body}`;
 		const secretMessage = new TextEncoder().encode(newBody);
 		const signature = nacl.sign.detached(secretMessage, keypair.secretKey);
 		const hexSignature = toHexString(signature);
@@ -130,8 +139,9 @@
 				<input type="password" placeholder="Password" bind:value={password} />
 			</div>
 			<div class="button-group">
+				<Button action={register} text="Register" type="secondary" />
+				<Button action={assignKeys} text="Want us to handle your keys?" type="secondary" />
 				<Button action={publish} text="Publish" />
-				<Button action={register} text="Want us to handle your keys?" />
 			</div>
 		{:else if tab === 'keys'}
 			<div class="input-group">
@@ -139,8 +149,13 @@
 				<input type="password" placeholder="Private key" bind:value={privateKey} />
 			</div>
 			<div class="button-group">
+				<Button
+					action={() => {
+						window.open('/generate', '_blank');
+					}}
+					text="Don't have keys? Generate them!"
+					type="secondary" />
 				<Button action={publish} text="Publish" />
-				<a href="/generate" target="_blank"> Don't have keys? Get your own here!</a>
 			</div>
 		{/if}
 	</section>

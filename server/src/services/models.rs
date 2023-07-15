@@ -64,3 +64,9 @@ pub struct Following {
     pub user: String,
     pub keys: Vec<String>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct KeypairDisplay {
+    pub public_key: String,
+    pub private_key: String,
+}

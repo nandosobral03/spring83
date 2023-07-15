@@ -7,13 +7,21 @@
 	import { userStore } from '$lib/stores/user.store';
 	import { modalStore } from '$lib/stores/modal.store';
 	import LoginModal from '$lib/components/LoginModal.svelte';
-	import { loadingStore } from '$lib/stores/loading.store';
 	import axios from 'axios';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { toastStore } from '$lib/stores/toast.store';
+	import { onMount } from 'svelte';
+	import Prism from 'prismjs';
 	export let data: PageServerData;
 	let shadowHost: HTMLElement;
 	let shadowRoot: ShadowRoot;
+
+	onMount(() => {
+		let result_element = document.querySelector('#highlighting-content')!;
+		result_element.innerHTML = data.body.replace(new RegExp('&', 'g'), '&amp;').replace(new RegExp('<', 'g'), '&lt;'); /* Global RegExp */
+		Prism.highlightElement(result_element);
+	});
+
 	$: {
 		if (browser && shadowHost) {
 			if (!shadowRoot) shadowRoot = shadowHost.attachShadow({ mode: 'open' });
@@ -81,13 +89,15 @@
 		} finally {
 		}
 	};
+
+	let showCode = false;
 </script>
 
 <section style={`${data.orientation == 'landscape' ? 'flex-direction: column' : 'flex-direction: row'}`}>
 	<div
 		style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
 			position: relative !important;
-            
+            display: ${showCode ? 'none' : 'flex'} !important;
             ${
 							data.orientation?.toLowerCase() === 'landscape'
 								? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
@@ -95,6 +105,21 @@
 						}`}>
 		<article bind:this={shadowHost} style="min-width: 100%; min-height: 100%;" />
 	</div>
+	<div
+		class="text-editor"
+		style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
+		position: relative !important;
+		display: ${showCode ? 'flex' : 'none'} !important;
+		${
+			data.orientation?.toLowerCase() === 'landscape'
+				? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
+				: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
+		}`}>
+		<pre id="highlighting" aria-hidden="true">
+			<code class="language-html" id="highlighting-content" />
+		</pre>
+	</div>
+
 	<div
 		class="info"
 		style={` ${
@@ -108,6 +133,11 @@
 		<div><b>Last Modified:</b> {moment(data.lastModified).format('MMMM Do YYYY, h:mm:ss a')}</div>
 		<div><b>Signature:</b> {data.signature}</div>
 		<div class="buttons">
+			{#if showCode}
+				<Button text="View Board" action={() => (showCode = !showCode)} />
+			{:else}
+				<Button text="View Code" action={() => (showCode = !showCode)} />
+			{/if}
 			{#if $userStore}
 				{#if data.following}
 					<Button text="Unfollow" action={unfollow} />
@@ -150,5 +180,82 @@
 		margin-top: auto;
 		display: flex;
 		gap: 1rem;
+	}
+
+	#editing,
+	#highlighting {
+		/* Both elements need the same text and space styling so they are directly on top of each other */
+		margin: 10px;
+		padding: 10px;
+		border: 0;
+		width: calc(100% - 32px);
+		height: calc(100% - 32px);
+		outline: none;
+	}
+	#editing,
+	#highlighting,
+	#highlighting * {
+		/* Also add text styles to highlighing tokens */
+		font-size: 10pt;
+		font-family: monospace;
+		line-height: 1.5;
+		tab-size: 2;
+	}
+
+	#editing,
+	#highlighting {
+		/* In the same place */
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	/* Move the textarea in front of the result */
+
+	#editing {
+		z-index: 1;
+	}
+	#highlighting {
+		z-index: 0;
+	}
+
+	/* Make textarea almost completely transparent */
+
+	#editing {
+		color: transparent;
+		background: transparent;
+		caret-color: white; /* Or choose your favourite color */
+	}
+
+	/* Can be scrolled */
+	#editing,
+	#highlighting {
+		overflow: auto;
+		white-space: nowrap; /* Allows textarea to scroll horizontally */
+	}
+
+	/* No resize on textarea */
+	#editing {
+		resize: none;
+	}
+
+	/* Paragraphs; First Image */
+	* {
+		font-family: 'Fira Code', monospace;
+	}
+
+	.text-editor {
+		position: relative;
+		flex-grow: 1;
+		border: 1px solid var(--background);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		background-color: var(--text);
+	}
+
+	code {
+		max-width: 100%;
 	}
 </style>

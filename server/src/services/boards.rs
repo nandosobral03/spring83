@@ -313,6 +313,7 @@ pub async fn get_followed_boards(username: String) -> Result<Vec<BoardDisplay>, 
                 if let Ok(board) = board {
                     boards.push(board);
                 }
+                boards.sort_unstable_by(|a, b| b.last_modified.cmp(&a.last_modified));
             }
             Ok(boards)
         }

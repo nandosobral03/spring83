@@ -1,5 +1,5 @@
 use super::{
-    models::{Following, SignInRequest, SignUpRequest, User},
+    models::{Following, KeypairDisplay, SignInRequest, SignUpRequest, User},
     service_utils::{create_jwt, get_db_connection, validate_key, MyError},
 };
 use ed25519_dalek::{PublicKey, SecretKey};
@@ -33,9 +33,9 @@ pub async fn sign_up(user: SignInRequest) -> Result<(), MyError> {
     Ok(())
 }
 
-pub async fn assign_keys_to_user(user: SignUpRequest) -> Result<(), MyError> {
+pub async fn assign_keys_to_user(user_login: SignUpRequest) -> Result<(), MyError> {
     let private_key: SecretKey =
-        SecretKey::from_bytes(&hex::decode(&user.private_key).map_err(|_| MyError {
+        SecretKey::from_bytes(&hex::decode(&user_login.private_key).map_err(|_| MyError {
             message: "Invalid private key".to_string(),
             status: 400,
         })?)
@@ -50,7 +50,7 @@ pub async fn assign_keys_to_user(user: SignUpRequest) -> Result<(), MyError> {
     let db = get_db_connection().await?;
     let user = db
         .collection::<User>("users")
-        .find_one(doc! {"email": user.email}, None)
+        .find_one(doc! {"email": user_login.email}, None)
         .await
         .map_err(|_| MyError {
             message: "Failed to get user".to_string(),
@@ -63,7 +63,7 @@ pub async fn assign_keys_to_user(user: SignUpRequest) -> Result<(), MyError> {
 
     let mut new_salt = [0u8; 16];
     new_salt.copy_from_slice(&hex::decode(user.salt).unwrap());
-    let new_hash = bcrypt::hash_with_salt(&user.password, 4, new_salt);
+    let new_hash = bcrypt::hash_with_salt(&user_login.password, 4, new_salt);
     if new_hash.unwrap().format_for_version(bcrypt::Version::TwoB) != user.password {
         return Err(MyError {
             message: "Invalid password".to_string(),
@@ -74,7 +74,7 @@ pub async fn assign_keys_to_user(user: SignUpRequest) -> Result<(), MyError> {
     db.collection::<User>("users")
         .update_one(
             doc! {"email": user.email},
-            doc! {"$set": {"public_key": public_key_hex, "private_key": user.private_key}},
+            doc! {"$set": {"public_key": public_key_hex, "private_key": user_login.private_key}},
             None,
         )
         .await
@@ -313,4 +313,41 @@ pub async fn remove_user(user_login: SignInRequest) -> Result<(), MyError> {
             status: 500,
         })?;
     Ok(())
+}
+
+pub async fn get_user_assigned_keys(user_login: SignInRequest) -> Result<KeypairDisplay, MyError> {
+    let db = get_db_connection().await?;
+    let user = db
+        .collection::<User>("users")
+        .find_one(doc! {"email": user_login.email}, None)
+        .await
+        .map_err(|_| MyError {
+            message: "Failed to get user".to_string(),
+            status: 500,
+        })?
+        .ok_or(MyError {
+            message: "User not found".to_string(),
+            status: 404,
+        })?;
+
+    let mut new_salt = [0u8; 16];
+    new_salt.copy_from_slice(&hex::decode(user.salt).unwrap());
+    let new_hash = bcrypt::hash_with_salt(&user_login.password, 4, new_salt);
+    if new_hash.unwrap().format_for_version(bcrypt::Version::TwoB) != user.password {
+        return Err(MyError {
+            message: "Invalid password".to_string(),
+            status: 400,
+        });
+    }
+
+    match (user.public_key, user.private_key) {
+        (Some(public_key), Some(private_key)) => Ok(KeypairDisplay {
+            public_key,
+            private_key,
+        }),
+        _ => Err(MyError {
+            message: "User has no associated keys".to_string(),
+            status: 417,
+        }),
+    }
 }

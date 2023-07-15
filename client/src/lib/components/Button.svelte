@@ -32,4 +32,14 @@
 			}
 		}
 	}
+
+	.secondary {
+		background: transparent;
+		color: var(--text);
+		border: 1px solid var(--text);
+		&:hover {
+			background: var(--text);
+			color: var(--background);
+		}
+	}
 </style>
