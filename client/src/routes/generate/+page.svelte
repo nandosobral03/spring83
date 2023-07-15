@@ -73,7 +73,9 @@
 	<ul>
 		<li><a href="https://github.com/nandosobral03/spring83-keygen"> Download the generator from github </a></li>
 	</ul>
-	<Button action={findKeypair} text="Generate" />
+	<div class="button">
+		<Button action={findKeypair} text="Generate" />
+	</div>
 	{#if startGenerating}
 		<p>Started generating at {startGenerating}</p>
 		{#if done}
@@ -85,6 +87,8 @@
 <style lang="scss">
 	div {
 		width: 80%;
+		display: flex;
+		flex-direction: column;
 	}
 	a {
 		color: var(--text);
@@ -92,5 +96,11 @@
 		&:hover {
 			filter: brightness(1.2);
 		}
+	}
+	.button {
+		margin-top: 25px;
+		width: 300px;
+		height: 50px;
+		align-self: center;
 	}
 </style>

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageServerData } from './$types';
 	import Board from '$lib/components/Board.svelte';
-
 	import { onMount } from 'svelte';
 	export let data: PageServerData;
 	let grid: HTMLElement;
@@ -20,7 +19,7 @@
 
 <div>
 	<main bind:this={grid} class="masonry">
-		{#each data.recent_boards as board}
+		{#each data.boards as board}
 			<Board {board} />
 		{/each}
 	</main>

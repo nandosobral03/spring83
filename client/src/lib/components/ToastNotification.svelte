@@ -41,6 +41,7 @@
 		.text {
 			font-size: 1rem;
 			font-weight: 400;
+			word-wrap: break-word;
 		}
 		.timestamp {
 			display: flex;

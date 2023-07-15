@@ -53,7 +53,8 @@
 			width: 100%;
 			justify-content: space-between;
 			font-size: 1.5rem;
-			font-family: 'Montserrat', sans-serif;
+			font-family: var(--font-header);
+			text-transform: uppercase;
 			font-weight: bold;
 			border-bottom: 1px solid black;
 			padding-bottom: 1rem;

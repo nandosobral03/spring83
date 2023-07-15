@@ -29,12 +29,10 @@
                 p, h1, h2, h3, h4, h5 { margin: 0 0 2rem 0; }
             </style>
             ${clean}`; // Use template literals (backticks) to insert variables
-			console.log(shadowRoot.innerHTML);
 		}
 	}
 
 	const details = () => {
-		console.log(board);
 		window.open(`/board/${board.key}`, '_blank');
 	};
 </script>

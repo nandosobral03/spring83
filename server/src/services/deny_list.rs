@@ -4,9 +4,7 @@ use serde::{Deserialize, Serialize};
 
 pub async fn add_denied_key(key: String) -> Result<(), MyError> {
     let client = get_db_connection().await?;
-    println!("Adding key: {}", &key);
     if !is_denied_key(&key).await? {
-        println!("Key not denied");
         client
             .collection("deny_list")
             .insert_one(doc! {"key": key}, None)

@@ -106,18 +106,22 @@
 
 <section style="margin-top: 1rem;">
 	<nav>
-		<Button
-			action={() => {
-				tab = 'login';
-			}}
-			text="login"
-			isIcon={true} />
-		<Button
-			action={() => {
-				tab = 'keys';
-			}}
-			text="key"
-			isIcon={true} />
+		<div>
+			<Button
+				action={() => {
+					tab = 'login';
+				}}
+				text="login"
+				isIcon={true} />
+		</div>
+		<div>
+			<Button
+				action={() => {
+					tab = 'keys';
+				}}
+				text="key"
+				isIcon={true} />
+		</div>
 	</nav>
 	<section>
 		{#if tab === 'login'}

@@ -3,8 +3,9 @@ use std::env;
 use chrono::Datelike;
 use dotenvy::dotenv;
 use ed25519_dalek::Verifier;
+use jsonwebtoken;
 use mongodb::{options::ClientOptions, Client, Database};
-
+use serde::{Deserialize, Serialize};
 pub struct MyError {
     pub message: String,
     pub status: u16,
@@ -113,8 +114,6 @@ fn get_datetime(body: &String) -> Result<String, MyError> {
 
 pub fn validate_signature(sig: &String, key: &String, body: &String) -> Result<(), MyError> {
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
-    println!("public key: {:?}", public_key);
-    println!("signature: {:?}", sig);
     let signature = ed25519_dalek::Signature::from_bytes(&hex::decode(sig).unwrap()).unwrap();
 
     public_key
@@ -147,4 +146,56 @@ pub async fn get_db_connection() -> Result<Database, MyError> {
         status: 500,
     })?;
     Ok(client.database("spring83"))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
+    pub iat: usize,
+    pub iss: String,
+}
+
+pub fn create_jwt(username: &str) -> Result<String, MyError> {
+    let mut header = jsonwebtoken::Header::default();
+    header.kid = Some("spring83".to_string());
+    let claims = Claims {
+        sub: username.to_string(),
+        exp: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp() as usize,
+        iat: chrono::Utc::now().timestamp() as usize,
+        iss: "spring83".to_string(),
+    };
+    let secret = env::var("JWT_SECRET").map_err(|_| MyError {
+        message: "Failed to read JWT_SECRET from .env file".to_string(),
+        status: 500,
+    })?;
+    let token = jsonwebtoken::encode(
+        &header,
+        &claims,
+        &jsonwebtoken::EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .map_err(|_| MyError {
+        message: "Failed to create JWT".to_string(),
+        status: 500,
+    })?;
+    Ok(token)
+}
+
+pub fn decode_jwt(token: &str) -> Result<Claims, MyError> {
+    println!("Token {}", token);
+    let secret = env::var("JWT_SECRET").map_err(|_| MyError {
+        message: "Failed to read JWT_SECRET from .env file".to_string(),
+        status: 500,
+    })?;
+    println!("Token {}", token);
+    let token = jsonwebtoken::decode::<Claims>(
+        token,
+        &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+        &jsonwebtoken::Validation::default(),
+    )
+    .map_err(|_| MyError {
+        message: "Failed to decode JWT".to_string(),
+        status: 500,
+    })?;
+    Ok(token.claims)
 }

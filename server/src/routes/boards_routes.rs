@@ -3,10 +3,11 @@ use std::fmt::{Display, Formatter};
 
 use super::route_utils::handle_error;
 use crate::services::boards;
-use axum::Json;
+use crate::services::service_utils::decode_jwt;
 use axum::extract::{Path, Query};
 use axum::http::HeaderMap;
 use axum::response::{Html, IntoResponse};
+use axum::Json;
 use chrono::Utc;
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -120,7 +121,6 @@ pub async fn get_board(headers: HeaderMap, Path(key): Path<String>) -> impl Into
     }
 }
 
-
 pub async fn get_recent_boards() -> impl IntoResponse {
     match boards::get_recently_updated_boards(5, 0).await {
         Ok(board_list) => (StatusCode::OK, Json(board_list)).into_response(),
@@ -131,6 +131,22 @@ pub async fn get_recent_boards() -> impl IntoResponse {
 pub async fn get_boards_count() -> impl IntoResponse {
     match boards::get_boards_count().await {
         Ok(count) => (StatusCode::OK, Json(count)).into_response(),
+        Err(e) => handle_error(e).into_response(),
+    }
+}
+
+pub async fn get_followed_boards(headers: HeaderMap) -> impl IntoResponse {
+    let auth = match headers.get("Authorization") {
+        Some(auth) => auth.to_str().unwrap().to_string(),
+        None => return (StatusCode::UNAUTHORIZED, "Missing auth header").into_response(),
+    };
+
+    let decoded_jwt = decode_jwt(&auth);
+    match decoded_jwt {
+        Ok(decoded_jwt) => match boards::get_followed_boards(decoded_jwt.sub).await {
+            Ok(board_list) => (StatusCode::OK, Json(board_list)).into_response(),
+            Err(e) => handle_error(e).into_response(),
+        },
         Err(e) => handle_error(e).into_response(),
     }
 }

@@ -2,6 +2,7 @@ use crate::routes::boards_routes::Orientation;
 
 use super::{
     deny_list::is_denied_key,
+    models::Following,
     service_utils::{
         get_db_connection, validate_key, validate_signature, validate_timestamp, MyError,
     },
@@ -21,7 +22,7 @@ pub async fn put_board(
     body: &String,
 ) -> Result<(), MyError> {
     validate_key(&key)?;
-    board_is_empty(&body)?;
+    let is_empty = board_is_empty(&body)?;
     let timestamp = validate_timestamp(&body)?;
     if is_denied_key(&key).await? {
         return Err(MyError {
@@ -30,7 +31,24 @@ pub async fn put_board(
         });
     }
     validate_signature(&sig, &key, &body)?;
-    save_board(&key, &body, &timestamp, orientation, &sig).await?;
+    if is_empty {
+        remove_board(&key).await?;
+    } else {
+        save_board(&key, &body, &timestamp, orientation, &sig).await?;
+    }
+    Ok(())
+}
+
+pub async fn remove_board(key: &str) -> Result<(), MyError> {
+    let client = get_db_connection().await?;
+    client
+        .collection::<Board>("boards")
+        .delete_one(doc! { "_id": key }, None)
+        .await
+        .map_err(|_| MyError {
+            message: "Failed to delete board".to_string(),
+            status: 500,
+        })?;
     Ok(())
 }
 
@@ -174,7 +192,7 @@ fn board_is_empty(document: &str) -> Result<bool, MyError> {
         status: 400,
     })?;
     let children = dom.nodes();
-    return Ok(children.len() == 0);
+    return Ok(children.len() <= 1);
 }
 
 pub async fn get_test_board() -> Result<BoardDisplay, MyError> {
@@ -275,6 +293,31 @@ pub async fn get_recently_updated_boards(
         boards_vec.push(board.into());
     }
     Ok(boards_vec)
+}
+
+pub async fn get_followed_boards(username: String) -> Result<Vec<BoardDisplay>, MyError> {
+    let db = get_db_connection().await?;
+    let following = db
+        .collection::<Following>("following")
+        .find_one(doc! { "user": username }, None)
+        .await
+        .map_err(|_| MyError {
+            message: "Failed to get following".to_string(),
+            status: 500,
+        })?;
+    match following {
+        Some(following) => {
+            let mut boards = vec![];
+            for key in following.keys {
+                let board = get_board(&key, None).await;
+                if let Ok(board) = board {
+                    boards.push(board);
+                }
+            }
+            Ok(boards)
+        }
+        None => return Ok(vec![]),
+    }
 }
 
 pub async fn get_boards_count() -> Result<u64, MyError> {

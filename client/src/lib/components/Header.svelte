@@ -1,14 +1,22 @@
 <script lang="ts">
 	import { boardCountStore } from '$lib/stores/board_count.store';
 	import moment from 'moment';
+	import Button from './Button.svelte';
+	import { modalStore } from '$lib/stores/modal.store';
+	import LoginModal from './LoginModal.svelte';
+	import { page } from '$app/stores';
+	import { userStore } from '$lib/stores/user.store';
 </script>
 
 <header>
 	<div class="nav_info">
 		<nav>
-			<a href="/" class="active"> Last Updated </a>
-			<a href="/submit">Submit</a>
-			<a href="/about">About</a>
+			<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
+			<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
+			<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
+			{#if $userStore}
+				<a href="/following" class:active={$page.url.pathname === '/following'}>Following</a>
+			{/if}
 		</nav>
 		<div class="current_info">
 			<span>
@@ -17,10 +25,24 @@
 					{$boardCountStore > 1 ? 'boards' : 'board'}
 				{/if}
 			</span>
-			<div class="current_time">
-				<b> The Internet </b>
-				<span> {moment().format('dddd, MMMM Do YYYY')} </span>
-			</div>
+			<span> {moment().format('dddd, MMMM Do YYYY')} </span>
+			{#if $userStore}
+				| <b>{$userStore?.username}</b>
+				<div>
+					<Button text="Logout" action={() => userStore.logout()} />
+				</div>
+			{:else}
+				<div>
+					<Button
+						text="Login"
+						action={() =>
+							modalStore.add({
+								title: 'Login',
+								component: LoginModal,
+								props: undefined
+							})} />
+				</div>
+			{/if}
 		</div>
 	</div>
 	<h1>
@@ -31,7 +53,7 @@
 <style lang="scss">
 	* {
 		box-sizing: border-box;
-		font-family: 'EB Garamond', serif;
+		font-family: var(--font-header);
 	}
 
 	header {
@@ -47,10 +69,11 @@
 		padding: 1rem;
 		font-size: 6rem;
 		margin: 0.2rem;
-		font-family: 'IM Fell Great Primer SC', serif;
+		font-family: 'Crimson Text', serif;
+		text-transform: uppercase;
 		line-height: 85% !important;
 		span {
-			font-family: 'EB Garamond', serif;
+			font-family: var(--font-header);
 		}
 	}
 
@@ -68,12 +91,17 @@
 				&.active {
 					font-weight: bold;
 				}
+				&:hover {
+					filter: brightness(1.2);
+					color: var(--accent) !important;
+				}
 			}
 		}
 		.current_info {
 			gap: 16px;
 			display: flex;
 			align-items: flex-end;
+			align-items: center;
 			.current_time {
 				b {
 					font-weight: 600;

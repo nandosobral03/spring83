@@ -3,6 +3,14 @@
 	import DOMPurify from 'dompurify';
 	import type { PageServerData } from './$types';
 	import moment from 'moment';
+	import Button from '$lib/components/Button.svelte';
+	import { userStore } from '$lib/stores/user.store';
+	import { modalStore } from '$lib/stores/modal.store';
+	import LoginModal from '$lib/components/LoginModal.svelte';
+	import { loadingStore } from '$lib/stores/loading.store';
+	import axios from 'axios';
+	import { PUBLIC_API_URL } from '$env/static/public';
+	import { toastStore } from '$lib/stores/toast.store';
 	export let data: PageServerData;
 	let shadowHost: HTMLElement;
 	let shadowRoot: ShadowRoot;
@@ -31,6 +39,48 @@
             ${clean}`;
 		}
 	}
+
+	const login = () => {
+		modalStore.add({
+			title: 'Login',
+			component: LoginModal,
+			props: {}
+		});
+	};
+
+	const follow = async () => {
+		try {
+			await axios.put(
+				`${PUBLIC_API_URL}/boards/following/${data.id}`,
+				{},
+				{
+					headers: {
+						Authorization: `${$userStore?.token}`
+					}
+				}
+			);
+			toastStore.addToast({ type: 'success', title: 'Board followed', text: `You are now following ${data.id}` });
+			data.following = true;
+		} catch (e) {
+			toastStore.addToast({ type: 'error', title: 'Error', text: `Error following ${data.id} try again later` });
+		} finally {
+		}
+	};
+
+	const unfollow = async () => {
+		try {
+			await axios.delete(`${PUBLIC_API_URL}/boards/following/${data.id}`, {
+				headers: {
+					Authorization: `${$userStore?.token}`
+				}
+			});
+			toastStore.addToast({ type: 'success', title: 'Board followed', text: `You are now following ${data.id}` });
+			data.following = false;
+		} catch (e) {
+			toastStore.addToast({ type: 'error', title: 'Error', text: `Error following ${data.id} try again later` });
+		} finally {
+		}
+	};
 </script>
 
 <section style={`${data.orientation == 'landscape' ? 'flex-direction: column' : 'flex-direction: row'}`}>
@@ -52,10 +102,22 @@
 				? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
 				: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
 		}`}>
+		<div><b>Key:</b> {data.id}</div>
 		<div><b>Orientation:</b> {data.orientation == 'landscape' ? 'Landscape' : 'Portrait'}</div>
 		<div><b>Size:</b> {data.size} bytes</div>
 		<div><b>Last Modified:</b> {moment(data.lastModified).format('MMMM Do YYYY, h:mm:ss a')}</div>
 		<div><b>Signature:</b> {data.signature}</div>
+		<div class="buttons">
+			{#if $userStore}
+				{#if data.following}
+					<Button text="Unfollow" action={unfollow} />
+				{:else}
+					<Button text="Follow" action={follow} />
+				{/if}
+			{:else}
+				<Button text="Follow" action={login} />
+			{/if}
+		</div>
 	</div>
 </section>
 
@@ -82,5 +144,11 @@
 			max-width: 500px;
 			word-break: break-all;
 		}
+	}
+
+	.buttons {
+		margin-top: auto;
+		display: flex;
+		gap: 1rem;
 	}
 </style>

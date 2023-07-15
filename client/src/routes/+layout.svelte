@@ -9,9 +9,16 @@
 	import type { LayoutServerData } from './$types';
 	import ToastNotification from '$lib/components/ToastNotification.svelte';
 	import { flip } from 'svelte/animate';
-
+	import { userStore } from '$lib/stores/user.store';
 	export let data: LayoutServerData;
 
+	if (data.token) {
+		try {
+			userStore.set(data.token);
+		} catch (err) {
+			console.log(err);
+		}
+	}
 	onMount(() => {
 		import('@lottiefiles/lottie-player');
 		boardCountStore.set(data.board_count);
