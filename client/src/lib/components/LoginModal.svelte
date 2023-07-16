@@ -6,7 +6,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { userStore } from '$lib/stores/user.store';
-
+	import '$lib/modal.scss';
 	let form = {
 		username: {
 			value: '',
@@ -44,7 +44,8 @@
 		modalStore.add({
 			title: 'Register',
 			component: RegisterModal,
-			props: {}
+			props: {},
+			size: 'sm'
 		});
 	};
 </script>
@@ -65,36 +66,7 @@
 			style={`border: ${form.password.touched && !form.password.value ? '1px solid red' : '1px solid black'}`} />
 	</div>
 	<div class="button-group">
+		<Button action={register} text="Don't have an account? Register" type="secondary" />
 		<Button action={login} text="Login" />
-		<Button action={register} text="Don't have an account? Register" />
 	</div>
 </section>
-
-<style lang="scss">
-	section {
-		padding: 1rem;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		height: 100%;
-		.input-group {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-			input {
-				padding: 1rem;
-				border: none;
-				outline: none;
-				border-radius: 3px;
-				font-size: 1rem;
-				background-color: transparent;
-				border: 1px solid black;
-			}
-		}
-		.button-group {
-			display: flex;
-			gap: 1rem;
-			height: 10%;
-		}
-	}
-</style>

@@ -1,9 +1,13 @@
 <script lang="ts">
 	import type { Board } from '$lib/models/board.model';
 	import Prism from 'prismjs';
+	import { createEventDispatcher } from 'svelte';
 	export let board: Board;
-	let textArea: HTMLTextAreaElement;
+	import moment from 'moment';
 
+	let timestamp = `<time datetime="${moment().format('YYYY-MM-DDTHH:mm:ss')}Z"></time>`;
+	let textArea: HTMLTextAreaElement;
+	const dispatch = createEventDispatcher();
 	function update(text: string) {
 		let result_element = document.querySelector('#highlighting-content')!;
 		// Handle final newlines (see article)
@@ -41,7 +45,7 @@
 	}
 </script>
 
-<section class="form">
+<section>
 	<select
 		name="orientation"
 		id="orientation"
@@ -69,6 +73,10 @@
 		<pre id="highlighting" aria-hidden="true">
 			<code class="language-html" id="highlighting-content" />
 		</pre>
+		<button class="info-button" on:click={() => dispatch('toggle_info')}>
+			<span class="material-symbols-outlined"> info_i </span>
+		</button>
+		<span class="length"> {new Blob([board.body]).size + new Blob([timestamp]).size + 1} bytes </span>
 	</div>
 </section>
 
@@ -172,5 +180,37 @@
 	/* Paragraphs; First Image */
 	* {
 		font-family: 'Fira Code', monospace;
+	}
+
+	button {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		background-color: white;
+		opacity: 10%;
+		border-radius: 50%;
+		z-index: 999;
+		height: 25px;
+		width: 25px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		span {
+			font-size: 1rem;
+			font-family: 'Material Symbols Outlined' !important;
+			user-select: none;
+		}
+		&:hover {
+			opacity: 60%;
+		}
+	}
+
+	.length {
+		position: absolute;
+		bottom: 10px;
+		right: 10px;
+		color: white;
+		z-index: 1;
+		font-size: 1rem;
 	}
 </style>

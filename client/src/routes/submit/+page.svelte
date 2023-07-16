@@ -2,6 +2,7 @@
 	import BoardComponent from '$lib/components/Board.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import CreateBoard from '$lib/components/CreateBoard.svelte';
+	import InfoPopOver from '$lib/components/InfoPopOver.svelte';
 	import SignBoard from '$lib/components/SignBoard.svelte';
 	import type { Board } from '$lib/models/board.model';
 	import { modalStore } from '$lib/stores/modal.store';
@@ -19,15 +20,25 @@
 		modalStore.add({
 			title: 'Sign & Publish',
 			component: SignBoard,
-			props: { board }
+			props: { board },
+			size: 'md'
 		});
 	};
+
+	let toggleInfo = false;
 </script>
 
 <div class="container">
 	<div class="preview_container">
-		<CreateBoard bind:board />
+		<CreateBoard
+			bind:board
+			on:toggle_info={() => {
+				toggleInfo = !toggleInfo;
+			}} />
 		<section class="preview">
+			{#if toggleInfo}
+				<InfoPopOver />
+			{/if}
 			<BoardComponent bind:board />
 		</section>
 	</div>
@@ -68,5 +79,6 @@
 		background-color: var(--text);
 		aspect-ratio: 1/1;
 		border-radius: 3px;
+		position: relative;
 	}
 </style>

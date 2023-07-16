@@ -39,7 +39,8 @@
 							modalStore.add({
 								title: 'Login',
 								component: LoginModal,
-								props: undefined
+								props: {},
+								size: 'sm'
 							})} />
 				</div>
 			{/if}
@@ -102,13 +103,6 @@
 			display: flex;
 			align-items: flex-end;
 			align-items: center;
-			.current_time {
-				b {
-					font-weight: 600;
-				}
-				display: flex;
-				flex-direction: column;
-			}
 		}
 	}
 </style>

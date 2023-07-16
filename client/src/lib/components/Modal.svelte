@@ -6,7 +6,7 @@
 	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<div class="backdrop" on:click={(e) => modalStore.pop()} on:keydown={(e) => e.key === 'Escape' && modalStore.pop()} role="dialog">
 		<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-		<div class="modal" on:click|stopPropagation on:keydown|stopPropagation role="dialog">
+		<div class={`modal ${$currentModalStore?.size}`} on:click|stopPropagation on:keydown|stopPropagation role="dialog">
 			<header>
 				{$currentModalStore?.title}
 				<button on:click={() => modalStore.pop()}>
@@ -76,7 +76,18 @@
 		}
 	}
 
-	.visually-hidden {
-		visibility: hidden;
+	.sm {
+		height: clamp(18rem, 70%, 22rem);
+		max-width: 30rem;
+	}
+
+	.md {
+		height: clamp(20rem, 70%, 30rem);
+		max-width: 40rem;
+	}
+
+	.lg {
+		height: clamp(22rem, 70%, 40rem);
+		max-width: 50rem;
 	}
 </style>

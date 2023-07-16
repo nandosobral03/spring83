@@ -4,7 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { toastStore } from '$lib/stores/toast.store';
 	import { modalStore } from '$lib/stores/modal.store';
-
+	import '$lib/modal.scss';
 	let form = {
 		username: {
 			value: '',
@@ -57,36 +57,7 @@
 			style={`border: ${form.password.touched && !form.password.value ? '1px solid red' : '1px solid black'}`} />
 	</div>
 	<div class="button-group">
+		<Button action={() => modalStore.pop()} text="Cancel" type="secondary" />
 		<Button action={signUp} text="Sign up" />
-		<Button action={() => modalStore.pop()} text="Cancel" />
 	</div>
 </section>
-
-<style lang="scss">
-	section {
-		padding: 1rem;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		height: 100%;
-		.input-group {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-			input {
-				padding: 1rem;
-				border: none;
-				outline: none;
-				border-radius: 3px;
-				font-size: 1rem;
-				background-color: transparent;
-				border: 1px solid black;
-			}
-		}
-		.button-group {
-			display: flex;
-			gap: 1rem;
-			height: 10%;
-		}
-	}
-</style>

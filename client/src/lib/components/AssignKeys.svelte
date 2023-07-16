@@ -4,7 +4,7 @@
 	import Button from './Button.svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { toastStore } from '$lib/stores/toast.store';
-
+	import '$lib/modal.scss';
 	let form = {
 		username: {
 			value: '',
@@ -60,36 +60,3 @@
 		<Button action={assignKeys} text="Link keypair" />
 	</div>
 </section>
-
-<style lang="scss">
-	section {
-		height: 100%;
-		padding: 0rem 1rem;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		.input-group {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-			input {
-				padding: 1rem;
-				border: none;
-				outline: none;
-				border-radius: 3px;
-				font-size: 1rem;
-				background-color: transparent;
-				border: 1px solid black;
-			}
-		}
-		.button-group {
-			display: flex;
-			gap: 1rem;
-			height: 10%;
-		}
-		margin: {
-			top: 1rem;
-			bottom: 1rem;
-		}
-	}
-</style>

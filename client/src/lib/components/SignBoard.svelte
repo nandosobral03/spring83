@@ -12,6 +12,7 @@
 	import { toastStore } from '$lib/stores/toast.store';
 	import { refreshBoardCount } from '$lib/stores/board_count.store';
 	import AssignKeys from './AssignKeys.svelte';
+	import '$lib/modal.scss';
 
 	export let board: Board;
 
@@ -56,7 +57,8 @@
 		modalStore.add({
 			title: 'Register',
 			component: RegisterModal,
-			props: {}
+			props: {},
+			size: 'sm'
 		});
 	};
 
@@ -64,7 +66,8 @@
 		modalStore.add({
 			title: 'Associate keypair',
 			component: AssignKeys,
-			props: {}
+			props: {},
+			size: 'md'
 		});
 	};
 
@@ -113,7 +116,7 @@
 	};
 </script>
 
-<section style="margin-top: 1rem;">
+<div style="margin-top: 1rem;" class="container">
 	<nav>
 		<div>
 			<Button
@@ -159,14 +162,14 @@
 			</div>
 		{/if}
 	</section>
-</section>
+</div>
 
 <style lang="scss">
 	* {
 		box-sizing: border-box;
 	}
 
-	section {
+	.container {
 		width: 100%;
 		height: 100%;
 		display: flex;
@@ -178,35 +181,9 @@
 			width: 20%;
 			gap: 1rem;
 		}
-		section {
-			padding: 0rem 1rem;
-			display: flex;
-			flex-direction: column;
-			justify-content: space-between;
-			.input-group {
-				display: flex;
-				flex-direction: column;
-				gap: 1rem;
-				input {
-					padding: 1rem;
-					border: none;
-					outline: none;
-					border-radius: 3px;
-					font-size: 1rem;
-					background-color: transparent;
-					border: 1px solid black;
-				}
-			}
-			.button-group {
-				display: flex;
-				gap: 1rem;
-				height: 10%;
-				a {
-					text-decoration: none;
-					color: black;
-					text-align: center;
-				}
-			}
-		}
+	}
+
+	section {
+		flex-grow: 1;
 	}
 </style>

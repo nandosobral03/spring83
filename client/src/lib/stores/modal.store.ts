@@ -5,6 +5,7 @@ export type ModalModel = {
     title: string,
     component: any,
     props: any
+    size: 'sm' | 'md' | 'lg';
 }
 
 export const currentModalStore = writable<ModalModel | null>(null)
