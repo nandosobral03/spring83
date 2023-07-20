@@ -39,7 +39,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
+	style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important;
 			position: relative !important;
 	
 	${

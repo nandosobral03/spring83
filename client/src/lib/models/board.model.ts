@@ -3,6 +3,6 @@ export type Board = {
   timestamp: string;
   last_modified: string;
   signature: string;
-  orientation: string;
+  orientation: "Portrait" | "Landscape";
   key: string;
 }
