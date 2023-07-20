@@ -189,7 +189,7 @@
 		background-color: white;
 		opacity: 10%;
 		border-radius: 50%;
-		z-index: 999;
+		z-index: 1;
 		height: 25px;
 		width: 25px;
 		display: flex;

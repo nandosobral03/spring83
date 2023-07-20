@@ -25,6 +25,14 @@
 		form.username.touched = true;
 		form.password.touched = true;
 		form.privateKey.touched = true;
+		if (!form.username.value || !form.password.value || !form.privateKey.value) {
+			toastStore.addToast({
+				title: 'Error',
+				text: 'Please fill in all fields',
+				type: 'error'
+			});
+			return;
+		}
 
 		try {
 			await axios.put(`${PUBLIC_API_URL}/auth/keys`, {
@@ -51,9 +59,21 @@
 
 <section>
 	<div class="input-group">
-		<input type="text" placeholder="Username" bind:value={form.username.value} />
-		<input type="password" placeholder="Password" bind:value={form.password.value} />
-		<input type="password" placeholder="Private key" bind:value={form.privateKey.value} />
+		<input
+			type="text"
+			placeholder="Username"
+			bind:value={form.username.value}
+			style={`border-color: ${form.username.touched && !form.username.value ? 'red !important' : ''}`} />
+		<input
+			type="password"
+			placeholder="Password"
+			bind:value={form.password.value}
+			style={`border-color: ${form.password.touched && !form.password.value ? 'red !important' : ''}`} />
+		<input
+			type="password"
+			placeholder="Private key"
+			bind:value={form.privateKey.value}
+			style={`border-color: ${form.privateKey.touched && !form.privateKey.value ? 'red !important' : ''}`} />
 	</div>
 	<div class="button-group">
 		<Button action={() => modalStore.pop()} text="Cancel" type="secondary" />

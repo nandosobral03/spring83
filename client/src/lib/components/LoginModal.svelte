@@ -19,6 +19,17 @@
 	};
 
 	const login = async () => {
+		form.username.touched = true;
+		form.password.touched = true;
+		if (!form.username.value || !form.password.value) {
+			toastStore.addToast({
+				title: 'Error',
+				text: 'Please fill in all fields',
+				type: 'error'
+			});
+			return;
+		}
+
 		try {
 			const response = await axios.post(`${PUBLIC_API_URL}/auth/login`, {
 				email: form.username.value,
@@ -57,13 +68,13 @@
 			placeholder="Username"
 			bind:value={form.username.value}
 			on:keydown={() => (form.username.touched = true)}
-			style={`border: ${form.username.touched && !form.username.value ? '1px solid red' : '1px solid black'}`} />
+			style={`border-color: ${form.username.touched && !form.username.value ? 'red !important' : 'black !important'}`} />
 		<input
 			type="password"
 			placeholder="Password"
 			bind:value={form.password.value}
 			on:keydown={() => (form.password.touched = true)}
-			style={`border: ${form.password.touched && !form.password.value ? '1px solid red' : '1px solid black'}`} />
+			style={`border-color: ${form.password.touched && !form.password.value ? 'red !important' : 'black !important'}`} />
 	</div>
 	<div class="button-group">
 		<Button action={register} text="Don't have an account? Register" type="secondary" />

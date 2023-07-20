@@ -6,7 +6,6 @@
 	import moment from 'moment';
 	import nacl from 'tweetnacl';
 	import type { Board } from '$lib/models/board.model';
-	import { onMount } from 'svelte';
 	import axios from 'axios';
 	import { loadingStore } from '$lib/stores/loading.store';
 	import { toastStore } from '$lib/stores/toast.store';
@@ -17,27 +16,63 @@
 	export let board: Board;
 
 	let tab: 'keys' | 'login' = 'login';
-	let email: string;
-	let password: string;
-	let publicKey: string;
-	let privateKey: string;
 
-	onMount(() => {
-		console.log(board);
-	});
+	const loginForm = {
+		username: {
+			value: '',
+			touched: false
+		},
+		password: {
+			value: '',
+			touched: false
+		}
+	};
+
+	const keysForm = {
+		publicKey: {
+			value: '',
+			touched: false
+		},
+		privateKey: {
+			value: '',
+			touched: false
+		}
+	};
 
 	const publish = async () => {
 		try {
 			loadingStore.set(true);
 			if (tab === 'login') {
+				loginForm.username.touched = true;
+				loginForm.password.touched = true;
+				if (!loginForm.username.value || !loginForm.password.value) {
+					toastStore.addToast({
+						title: 'Error',
+						text: 'Please fill in all fields',
+						type: 'error'
+					});
+					return;
+				}
+
 				const response = await axios.post(`${PUBLIC_API_URL}/auth/keys`, {
-					email,
-					password
+					email: loginForm.username.value,
+					password: loginForm.password.value
 				});
 				const { private_key, public_key } = response.data;
 				await signBoard(board, `${private_key}${public_key}`);
 			} else {
-				const fullKey = `${privateKey}${publicKey}`;
+				keysForm.publicKey.touched = true;
+				keysForm.privateKey.touched = true;
+				if (!keysForm.publicKey.value || !keysForm.privateKey.value) {
+					toastStore.addToast({
+						title: 'Error',
+						text: 'Please fill in all fields',
+						type: 'error'
+					});
+					return;
+				}
+
+				const fullKey = `${keysForm.privateKey.value}${keysForm.publicKey.value}`;
 				await signBoard(board, fullKey);
 			}
 			modalStore.pop();
@@ -98,7 +133,7 @@
 		const hexSignature = toHexString(signature);
 		board.signature = hexSignature;
 
-		const response = await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
+		await axios.put(`${PUBLIC_API_URL}/${publicKeyString}`, newBody, {
 			headers: {
 				'Content-Type': 'text/html',
 				'Spring-Signature': hexSignature
@@ -122,6 +157,8 @@
 			<Button
 				action={() => {
 					tab = 'login';
+					keysForm.publicKey.touched = false;
+					keysForm.privateKey.touched = false;
 				}}
 				text="login"
 				isIcon={true} />
@@ -130,6 +167,8 @@
 			<Button
 				action={() => {
 					tab = 'keys';
+					loginForm.username.touched = false;
+					loginForm.password.touched = false;
 				}}
 				text="key"
 				isIcon={true} />
@@ -138,8 +177,16 @@
 	<section>
 		{#if tab === 'login'}
 			<div class="input-group">
-				<input type="text" placeholder="Username" bind:value={email} />
-				<input type="password" placeholder="Password" bind:value={password} />
+				<input
+					type="text"
+					placeholder="Username"
+					bind:value={loginForm.username.value}
+					style={`border-color: ${loginForm.username.touched && !loginForm.username.value ? 'red !important' : ''}`} />
+				<input
+					type="password"
+					placeholder="Password"
+					bind:value={loginForm.password.value}
+					style={`border-color: ${loginForm.password.touched && !loginForm.password.value ? 'red !important' : ''}`} />
 			</div>
 			<div class="button-group">
 				<Button action={register} text="Register" type="secondary" />
@@ -148,8 +195,16 @@
 			</div>
 		{:else if tab === 'keys'}
 			<div class="input-group">
-				<input type="text" placeholder="Public key" bind:value={publicKey} />
-				<input type="password" placeholder="Private key" bind:value={privateKey} />
+				<input
+					type="text"
+					placeholder="Public key"
+					bind:value={keysForm.publicKey.value}
+					style={`border-color: ${keysForm.publicKey.touched && !keysForm.publicKey.value ? 'red !important' : ''}`} />
+				<input
+					type="password"
+					placeholder="Private key"
+					bind:value={keysForm.privateKey.value}
+					style={`border-color: ${keysForm.privateKey.touched && !keysForm.privateKey.value ? 'red !important' : ''}`} />
 			</div>
 			<div class="button-group">
 				<Button

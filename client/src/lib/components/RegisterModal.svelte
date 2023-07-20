@@ -19,7 +19,14 @@
 	const signUp = async () => {
 		form.username.touched = true;
 		form.password.touched = true;
-		if (!form.username.value || !form.password.value) return;
+		if (!form.username.value || !form.password.value) {
+			toastStore.addToast({
+				title: 'Error',
+				text: 'Please fill in all fields',
+				type: 'error'
+			});
+			return;
+		}
 		try {
 			const response = await axios.post(`${PUBLIC_API_URL}/auth`, {
 				email: form.username.value,
@@ -48,13 +55,13 @@
 			placeholder="Username"
 			bind:value={form.username.value}
 			on:keydown={() => (form.username.touched = true)}
-			style={`border: ${form.username.touched && !form.username.value ? '1px solid red' : '1px solid black'}`} />
+			style={`border-color: ${form.username.touched && !form.username.value ? 'red !important' : ' black !important'}`} />
 		<input
 			type="password"
 			placeholder="Password"
 			bind:value={form.password.value}
 			on:keydown={() => (form.password.touched = true)}
-			style={`border: ${form.password.touched && !form.password.value ? '1px solid red' : '1px solid black'}`} />
+			style={`border-color: ${form.password.touched && !form.password.value ? 'red !important' : ' black !important'}`} />
 	</div>
 	<div class="button-group">
 		<Button action={() => modalStore.pop()} text="Cancel" type="secondary" />
