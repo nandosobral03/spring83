@@ -121,8 +121,18 @@ pub async fn get_board(headers: HeaderMap, Path(key): Path<String>) -> impl Into
     }
 }
 
-pub async fn get_recent_boards() -> impl IntoResponse {
-    match boards::get_recently_updated_boards(5, 0).await {
+pub async fn get_recent_boards(query: Query<HashMap<String, String>>) -> impl IntoResponse {
+    let limit = match query.get("limit") {
+        Some(limit) => limit.parse::<i64>().unwrap(),
+        None => 5,
+    };
+
+    let offset = match query.get("offset") {
+        Some(offset) => offset.parse::<u64>().unwrap(),
+        None => 0,
+    };
+
+    match boards::get_recently_updated_boards(limit, offset).await {
         Ok(board_list) => (StatusCode::OK, Json(board_list)).into_response(),
         Err(e) => handle_error(e).into_response(),
     }

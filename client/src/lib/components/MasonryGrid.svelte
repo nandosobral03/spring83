@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Board } from '$lib/models/board.model';
 	import BoardComponent from '$lib/components/Board.svelte';
-	export let elements: Board[] & { columnStart: number; columnEnd: number; rowStart: number; rowEnd: number }[];
+	export let elements: Board[];
 	let width: number;
 	let masonryWidth: number = 900;
 	$: {
@@ -17,9 +17,8 @@
 
 <svelte:window bind:innerWidth={width} />
 
-<div class="masonry" style={`${masonryWidth}px !important; min-width: ${masonryWidth}px !important; max-width: ${masonryWidth}px !important;`}>
+<div class="masonry" style={`width:${masonryWidth}px !important; min-width: ${masonryWidth}px !important; max-width: ${masonryWidth}px !important;`}>
 	{#each elements as element, i}
-		<!-- Take either 7 or 10 columns depending on screen width -->
 		<div
 			class="masonry-item"
 			id={`board-${i}`}
@@ -36,6 +35,8 @@
 		grid-template-rows: repeat(auto-fill, minmax(50px, 1rem));
 		width: 100%;
 		position: relative;
+		column-gap: 1px;
+		row-gap: 5px;
 	}
 
 	.masonry-item {

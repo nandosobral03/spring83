@@ -1,13 +1,11 @@
 import { API_URL } from "$env/static/private"
 
 export const load = async () => {
-    const recent_boards = await (await fetch(`${API_URL}/boards`).then(res => res.json()))
-    console.log(recent_boards)
+    let limit = 20
+    const recent_boards = await (await fetch(`${API_URL}/boards?offset=0&limit=${limit}`)).json()
     return {
-        // recent_boards: [...recent_boards, ...recent_boards, ...recent_boards, ...recent_boards, ...recent_boards, ...recent_boards, ...recent_boards, ...recent_boards].sort(
-        //     () => Math.random() - 0.5
-        // )
-        recent_boards: recent_boards
+        recent_boards: recent_boards,
+        offset: limit,
     }
 
 }

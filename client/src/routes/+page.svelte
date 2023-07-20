@@ -1,32 +1,50 @@
 <script lang="ts">
 	import type { PageServerData } from './$types';
-	import Board from '$lib/components/Board.svelte';
-
 	import { onMount } from 'svelte';
 	import MasonryGrid from '$lib/components/MasonryGrid.svelte';
+	import type { Board } from '$lib/models/board.model';
+	import { PUBLIC_API_URL } from '$env/static/public';
 	export let data: PageServerData;
 	let grid: HTMLElement;
-
-	onMount(async () => {
-		// const Masonry = (await import('masonry-layout')).default;
-		// let msn = new Masonry(grid, {
-		// 	itemSelector: '.masonry-item',
-		// 	columnWidth: 5,
-		// 	stagger: 30,
-		// 	transitionDuration: '0.2s',
-		// 	initLayout: true
-		// });
+	let currentOffset = data.offset;
+	let keepRequesting = true;
+	let debounce = false;
+	let boards: Board[] = [];
+	async function getBoards() {
+		if (!keepRequesting) return Promise.resolve();
+		console.log('Getting more boards');
+		const res = await fetch(`${PUBLIC_API_URL}/boards?offset=${currentOffset}`);
+		const json = await res.json();
+		if (json.length === 0) {
+			keepRequesting = false;
+			return Promise.resolve();
+		}
+		boards.push(...json);
+		boards = boards;
+		console.log(boards);
+		currentOffset += 10;
+	}
+	onMount(() => {
+		boards = data.recent_boards;
+		document.addEventListener('scroll', async () => {
+			console.log(grid?.getBoundingClientRect().bottom, window.innerHeight);
+			if (grid?.getBoundingClientRect().bottom < window.innerHeight + 500 && !debounce) {
+				debounce = true;
+				await getBoards().then(() => {
+					console.log('Debouncing');
+					debounce = false;
+				});
+			}
+		});
 		console.log(data.recent_boards);
+		return () => {
+			document.removeEventListener('scroll', () => {});
+		};
 	});
 </script>
 
-<div>
-	<!-- <main bind:this={grid} class="masonry">
-		{#each data.recent_boards as board}
-			<Board {board} />
-		{/each}
-	</main> -->
-	<MasonryGrid elements={data.recent_boards} />
+<div bind:this={grid}>
+	<MasonryGrid elements={boards} />
 </div>
 
 <style lang="scss">
@@ -39,6 +57,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		padding: 30px 0px;
 	}
 
 	main {
