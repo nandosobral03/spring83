@@ -22,7 +22,6 @@ const createToastStore = () => {
             let { type, title, text, duration = 2000 } = toast;
             let timestamp = new Date().getTime();
             state.update(x => [...x, { type, title, text, timestamp }]);
-            console.log(state);
             setTimeout(() => {
                 state.update(x => x.filter(y => y.timestamp !== timestamp));
             }, duration);

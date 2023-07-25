@@ -28,13 +28,18 @@
 	<div class="container" on:click|stopPropagation transition:fly={{ x: -500, duration: 350 }}>
 		<nav>
 			<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
+			{#if $userStore}
+				<a href="/following" class:active={$page.url.pathname === '/following'}>Following</a>
+			{/if}
 			<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
 			<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
 		</nav>
 		<div class="current_info">
 			<span> {moment().format('dddd, MMMM Do YYYY')} </span>
 			{#if $userStore}
-				| <b>{$userStore?.username}</b>
+				<span>
+					Logged in as <b>{$userStore?.username}</b>
+				</span>
 				<div>
 					<Button text="Logout" action={() => userStore.logout()} />
 				</div>
@@ -67,6 +72,7 @@
 		left: 0;
 		width: 100%;
 		background-color: #000000aa;
+		z-index: 10;
 	}
 
 	.container {
@@ -78,7 +84,19 @@
 		gap: 16px;
 		padding: 1rem;
 		background-color: var(--background);
+		z-index: 100;
+		box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
 	}
+
+	.current_info {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		div {
+			height: 3rem;
+		}
+	}
+
 	nav {
 		display: flex;
 		gap: 16px;

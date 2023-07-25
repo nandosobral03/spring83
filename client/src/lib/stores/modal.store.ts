@@ -24,7 +24,6 @@ const createModalStore = () => {
         pop: () => {
             update(modals => modals.slice(0, -1))
             modals.pop()
-            console.log(modals[modals.length - 1])
             currentModalStore.set(modals[modals.length - 1])
         },
         clear: () => {

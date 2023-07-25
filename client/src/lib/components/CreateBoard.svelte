@@ -89,6 +89,7 @@
 	}
 	select {
 		width: 100%;
+
 		padding: 1rem;
 		gap: 1rem;
 		background-color: var(--text);
@@ -100,7 +101,8 @@
 	}
 
 	section {
-		width: 50%;
+		min-height: 70vh;
+		width: 100%;
 		border: 1px solid black;
 		display: flex;
 		flex-direction: column;

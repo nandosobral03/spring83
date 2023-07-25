@@ -15,8 +15,6 @@ export const load = async ({ cookies }) => {
         throw error(401, 'Unauthorized');
     }
 
-    console.log(token)
-
     const followed = await axios.get(`${API_URL}/boards/feed`, {
         headers: {
             Authorization: `${token}`

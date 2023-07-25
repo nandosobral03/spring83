@@ -12,6 +12,7 @@
 	import Prism from 'prismjs';
 	import BoardComponent from '$lib/components/Board.svelte';
 	export let data: PageServerData;
+
 	let mobile = false;
 	let width: number;
 	let scaleFactor: number = 1;
@@ -74,7 +75,7 @@
 					Authorization: `${$userStore?.token}`
 				}
 			});
-			toastStore.addToast({ type: 'success', title: 'Board followed', text: `You are now following ${data.id}` });
+			toastStore.addToast({ type: 'success', title: 'Board unfollowed', text: `You are no longer following ${data.id}` });
 			data.following = false;
 		} catch (e) {
 			toastStore.addToast({ type: 'error', title: 'Error', text: `Error following ${data.id} try again later` });

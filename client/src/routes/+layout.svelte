@@ -27,7 +27,7 @@
 </script>
 
 <main class:no-scroll={showingNav || $modalStore.length > 0}>
-	<Header on:toggleNav={() => (showingNav = !showingNav)} />
+	<Header on:toggleNav={() => (showingNav = !showingNav)} orientation={data.orientation} />
 	<slot />
 	{#if $modalStore != null}
 		<Modal />

@@ -1,28 +1,11 @@
 <script lang="ts">
 	import type { PageServerData } from './$types';
-	import Board from '$lib/components/Board.svelte';
-	import { onMount } from 'svelte';
+	import MasonryGrid from '$lib/components/MasonryGrid.svelte';
 	export let data: PageServerData;
-	let grid: HTMLElement;
-
-	onMount(async () => {
-		const Masonry = (await import('masonry-layout')).default;
-		let msn = new Masonry(grid, {
-			itemSelector: '.masonry-item',
-			columnWidth: 5,
-			stagger: 30,
-			transitionDuration: '0.2s',
-			initLayout: true
-		});
-	});
 </script>
 
 <div>
-	<main bind:this={grid} class="masonry">
-		{#each data.boards as board}
-			<Board {board} />
-		{/each}
-	</main>
+	<MasonryGrid elements={data.boards} />
 </div>
 
 <style lang="scss">
@@ -34,10 +17,7 @@
 		height: fit-content;
 		display: flex;
 		justify-content: center;
-	}
-
-	main {
-		width: 100%;
-		height: 100%;
+		align-items: center;
+		padding: 30px 0px;
 	}
 </style>

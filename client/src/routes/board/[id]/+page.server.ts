@@ -9,22 +9,12 @@ export const load = async ({ params, cookies }) => {
     const token = cookies?.get("jwt")
     let follows_board = false
     if (token) {
-        console.log("TOKEN")
         const decoded: { sub: string, exp: number } = jose.decodeJwt(token) as any;
         if (decoded.exp > moment().unix()) {
             const followed_boards = await axios.get(`${API_URL}/boards/following`, { headers: { Authorization: `${token}` } })
-            console.log(followed_boards)
-            let body = await followed_boards.data;
-            follows_board = body.includes(params.id)
-            if (body.includes(params.id)) {
-                console.log("FOLLOWED")
-            }
-            else {
-                console.log("NOT FOLLOWED")
-            }
+            follows_board = followed_boards.data.includes(params.id)
         }
     }
-
 
     return {
         body: body,

@@ -11,8 +11,7 @@
 
 	const dispatch = createEventDispatcher();
 
-	let orientation = 'landscape';
-	orientation = browser ? (screen.orientation.type.includes('landscape') ? 'landscape' : 'portrait') : 'landscape';
+	export let orientation: 'portrait' | 'landscape';
 	let width: number;
 	$: {
 		if (browser) {
@@ -65,7 +64,7 @@
 					</div>
 				{/if}
 			</div>
-		{:else if orientation != 'landscape'}
+		{:else}
 			<div class="button">
 				<Button
 					isIcon

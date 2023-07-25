@@ -4,5 +4,8 @@ export const handle = async ({ event, resolve }) => {
         (event.locals as any).user = jwt;
     }
     const response = await resolve(event);
+
+
+
     return response;
 };

@@ -15,7 +15,7 @@
 	};
 </script>
 
-<div style={`border-left: 5px solid ${colors[type]}`} transition:fly={{ x: 200, duration: 300 }}>
+<div style={`border-left: 0.5rem solid ${colors[type]}`} transition:fly={{ x: 200, duration: 300 }}>
 	<span class="title">{title}</span>
 	<span class="text">{text}</span>
 	<span class="timestamp">{new Date(timestamp).toLocaleTimeString()}</span>
@@ -31,7 +31,9 @@
 		flex-direction: column;
 		width: 300px;
 		gap: 0.5rem;
-		font-family: 'Montserrat', sans-serif;
+		margin-right: 1rem;
+		font-family: var(--font-text);
+		box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
 		.title {
 			font-size: 1rem;
 			font-weight: 600;

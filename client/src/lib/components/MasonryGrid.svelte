@@ -9,10 +9,8 @@
 	let mobile = false;
 
 	const handleWidth = () => {
-		console.log('Width', width);
 		if (width) {
 			masonryWidth = width * 0.9;
-			console.log('Mas', masonryWidth);
 			if (masonryWidth < 550) {
 				scaleFactor = masonryWidth / 550;
 				mobile = true;

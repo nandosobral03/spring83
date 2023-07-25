@@ -20,22 +20,18 @@
 		}
 		boards.push(...json);
 		boards = boards;
-		console.log(boards);
 		currentOffset += 10;
 	}
 	onMount(() => {
 		boards = data.recent_boards;
 		document.addEventListener('scroll', async () => {
-			console.log(grid?.getBoundingClientRect().bottom, window.innerHeight);
 			if (grid?.getBoundingClientRect().bottom < window.innerHeight + 500 && !debounce) {
 				debounce = true;
 				await getBoards().then(() => {
-					console.log('Debouncing');
 					debounce = false;
 				});
 			}
 		});
-		console.log(data.recent_boards);
 		return () => {
 			document.removeEventListener('scroll', () => {});
 		};
