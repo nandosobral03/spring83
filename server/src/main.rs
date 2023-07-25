@@ -15,6 +15,13 @@ mod services;
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    tokio::select! {
+        _ = create_server() => (),
+        _ = create_periodic_delete_job() => (),
+    }
+}
+
+async fn create_server() {
     let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
     let app = Router::new()
         .route("/", get(introduction))
@@ -75,10 +82,23 @@ async fn main() {
         );
     // Start the server
     let addr = ("127.0.0.1:".to_string() + &port).parse().unwrap();
+
     Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .expect("Server failed");
+}
+
+async fn create_periodic_delete_job() {
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60 * 60 * 24));
+    loop {
+        interval.tick().await;
+        let deleted = services::boards::delete_old_boards().await;
+        match deleted {
+            Ok(()) => println!("Deleted boards"),
+            Err(e) => println!("Error deleting boards: {:?}", e),
+        }
+    }
 }
 
 async fn introduction() -> impl IntoResponse {
@@ -88,30 +108,3 @@ async fn introduction() -> impl IntoResponse {
     );
     Html(contents)
 }
-
-// async fn propagate_header<B>(req: Request<B>, next: Next<B>) -> Response {
-//     if req.method() == Method::OPTIONS {
-//         let mut res = next.run(req).await;
-//         res.headers_mut().insert(
-//             "Access-Control-Allow-Methods",
-//             "GET, OPTIONS, PUT".parse().unwrap(),
-//         );
-//         res.headers_mut()
-//             .insert("Access-Control-Allow-Origin", "*".parse().unwrap());
-//         res.headers_mut().insert(
-//             "Access-Control-Allow-Headers",
-//             "Content-Type, If-Modified-Since, Spring-Signature, Spring-Version"
-//                 .parse()
-//                 .unwrap(),
-//         );
-//         res.headers_mut().insert(
-//             "Access-Control-Expose-Headers",
-//             "Content-Type, Last-Modified, Spring-Signature, Spring-Version"
-//                 .parse()
-//                 .unwrap(),
-//         );
-//         return (StatusCode::NO_CONTENT).into_response();
-//     }
-//     let res = next.run(req).await;
-//     res
-// }

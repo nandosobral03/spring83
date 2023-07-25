@@ -333,3 +333,18 @@ pub async fn get_boards_count() -> Result<u64, MyError> {
         })?;
     Ok(count)
 }
+
+pub async fn delete_old_boards() -> Result<(), MyError> {
+    // Max age 21 days
+    let max_age = Utc::now().timestamp_millis() - (21 * 24 * 60 * 60 * 1000);
+    let client = get_db_connection().await?;
+    let collection = client.collection::<Board>("boards");
+    collection
+        .delete_many(doc! { "last_modified": { "$lt": max_age } }, None)
+        .await
+        .map_err(|e| MyError {
+            message: format!("Failed to delete old boards: {}", e),
+            status: 500,
+        })?;
+    Ok(())
+}

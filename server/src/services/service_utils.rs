@@ -6,6 +6,8 @@ use ed25519_dalek::Verifier;
 use jsonwebtoken;
 use mongodb::{options::ClientOptions, Client, Database};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug)]
 pub struct MyError {
     pub message: String,
     pub status: u16,

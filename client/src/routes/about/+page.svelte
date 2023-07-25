@@ -28,12 +28,15 @@
 
 <style lang="scss">
 	section {
+		height: fit-content;
 		width: 80%;
 		display: flex;
 		justify-content: flex-start;
 		flex-direction: column;
 		font-size: 1.2rem;
 		gap: 0.4rem;
+		padding: 0;
+		padding-bottom: 1rem;
 		font-family: var(--font-header) !important;
 		a {
 			color: var(--accent);

@@ -1,32 +1,75 @@
 <script lang="ts">
 	import type { Board } from '$lib/models/board.model';
 	import BoardComponent from '$lib/components/Board.svelte';
+	import { onMount } from 'svelte';
 	export let elements: Board[];
 	let width: number;
-	let masonryWidth: number = 900;
-	$: {
+	let scaleFactor: number = 1;
+	let masonryWidth: number = 500;
+	let mobile = false;
+
+	const handleWidth = () => {
+		console.log('Width', width);
 		if (width) {
 			masonryWidth = width * 0.9;
+			console.log('Mas', masonryWidth);
+			if (masonryWidth < 550) {
+				scaleFactor = masonryWidth / 550;
+				mobile = true;
+			} else {
+				mobile = false;
+			}
 			if (masonryWidth % 50 !== 0) {
 				masonryWidth = Math.floor(masonryWidth / 50) * 50;
 			}
-			console.log(masonryWidth);
 		}
+	};
+
+	onMount(() => {
+		handleWidth();
+	});
+
+	$: {
+		width = width;
+		handleWidth();
 	}
 </script>
 
 <svelte:window bind:innerWidth={width} />
 
-<div class="masonry" style={`width:${masonryWidth}px !important; min-width: ${masonryWidth}px !important; max-width: ${masonryWidth}px !important;`}>
-	{#each elements as element, i}
-		<div
-			class="masonry-item"
-			id={`board-${i}`}
-			style={`${element.orientation === 'Landscape' ? 'grid-column: span 10; grid-row: span 7' : 'grid-column: span 7; grid-row: span 10'}`}>
-			<BoardComponent board={element} />
-		</div>
-	{/each}
-</div>
+{#if mobile}
+	<div class="flex">
+		{#each elements as element, i}
+			<div
+				class="masonry-item"
+				id={`board-${i}`}
+				style={`transform: scale(${scaleFactor}); 
+				transform-origin: top;
+				${
+					element.orientation === 'Landscape'
+						? `width: ${550 * scaleFactor}px; height: ${350 * scaleFactor}px;`
+						: `width: ${350 * scaleFactor}px; height: ${550 * scaleFactor}px;`
+				};`}>
+				<BoardComponent board={element} />
+			</div>
+		{/each}
+	</div>
+{:else}
+	<div
+		class="masonry"
+		style={`width:${masonryWidth}px !important; min-width: ${masonryWidth}px !important; max-width: ${masonryWidth}px !important;`}>
+		{#each elements as element, i}
+			<div
+				class="masonry-item"
+				id={`board-${i}`}
+				style={`${element.orientation === 'Landscape' ? 'grid-column: span 10; grid-row: span 7' : 'grid-column: span 7; grid-row: span 10'};  ${
+					scaleFactor !== 1 ? `transform: scale(${scaleFactor}); transform-origin: top;` : ''
+				} `}>
+				<BoardComponent board={element} />
+			</div>
+		{/each}
+	</div>
+{/if}
 
 <style lang="scss">
 	.masonry {
@@ -37,6 +80,17 @@
 		position: relative;
 		column-gap: 1px;
 		row-gap: 5px;
+		place-content: center;
+		grid-auto-flow: dense;
+	}
+
+	.flex {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		gap: 1rem;
 	}
 
 	.masonry-item {

@@ -12,7 +12,6 @@
 	let boards: Board[] = [];
 	async function getBoards() {
 		if (!keepRequesting) return Promise.resolve();
-		console.log('Getting more boards');
 		const res = await fetch(`${PUBLIC_API_URL}/boards?offset=${currentOffset}`);
 		const json = await res.json();
 		if (json.length === 0) {
@@ -58,10 +57,5 @@
 		justify-content: center;
 		align-items: center;
 		padding: 30px 0px;
-	}
-
-	main {
-		width: 100%;
-		height: 100%;
 	}
 </style>

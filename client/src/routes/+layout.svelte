@@ -10,8 +10,9 @@
 	import ToastNotification from '$lib/components/ToastNotification.svelte';
 	import { flip } from 'svelte/animate';
 	import { userStore } from '$lib/stores/user.store';
+	import MobileNavigation from '$lib/components/MobileNavigation.svelte';
 	export let data: LayoutServerData;
-
+	let showingNav = false;
 	if (data.token) {
 		try {
 			userStore.set(data.token);
@@ -25,8 +26,8 @@
 	});
 </script>
 
-<main>
-	<Header />
+<main class:no-scroll={showingNav || $modalStore.length > 0}>
+	<Header on:toggleNav={() => (showingNav = !showingNav)} />
 	<slot />
 	{#if $modalStore != null}
 		<Modal />
@@ -42,6 +43,10 @@
 				autoplay />
 		</div>
 	{/if}
+	{#if showingNav}
+		<MobileNavigation on:close={() => (showingNav = false)} />
+	{/if}
+
 	<div class="toast">
 		{#each $toastStore as notification (notification.timestamp)}
 			<div animate:flip={{ duration: 300 }}>
@@ -79,7 +84,7 @@
 		position: fixed;
 		bottom: 0;
 		right: 0;
-		margin: 2rem;
+		margin: 2rem 0rem;
 		z-index: 11;
 		display: flex;
 		flex-direction: column-reverse;

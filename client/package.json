@@ -49,6 +49,7 @@
 		"prismjs": "^1.29.0",
 		"sass": "^1.63.6",
 		"svelte-forms-lib": "^2.0.1",
+		"svelte-gestures": "^1.5.2",
 		"tweetnacl": "^1.0.3"
 	}
 }

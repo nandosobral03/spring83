@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import DOMPurify from 'dompurify';
 	import type { PageServerData } from './$types';
 	import moment from 'moment';
 	import Button from '$lib/components/Button.svelte';
@@ -12,47 +10,41 @@
 	import { toastStore } from '$lib/stores/toast.store';
 	import { onMount } from 'svelte';
 	import Prism from 'prismjs';
+	import BoardComponent from '$lib/components/Board.svelte';
 	export let data: PageServerData;
-	let shadowHost: HTMLElement;
-	let shadowRoot: ShadowRoot;
+	let mobile = false;
+	let width: number;
+	let scaleFactor: number = 1;
+	const handleWidth = () => {
+		if (width) {
+			if (width < 650) {
+				scaleFactor = width / 650;
+				mobile = true;
+			} else {
+				scaleFactor = 1;
+				mobile = false;
+			}
+		}
+	};
+
+	$: {
+		width = width;
+		handleWidth();
+	}
 
 	onMount(() => {
 		let result_element = document.querySelector('#highlighting-content')!;
 		result_element.innerHTML = data.body.replace(new RegExp('&', 'g'), '&amp;').replace(new RegExp('<', 'g'), '&lt;'); /* Global RegExp */
 		Prism.highlightElement(result_element);
+		handleWidth();
 	});
-
-	$: {
-		if (browser && shadowHost) {
-			if (!shadowRoot) shadowRoot = shadowHost.attachShadow({ mode: 'open' });
-			const clean = DOMPurify.sanitize(data.body, { FORBID_TAGS: ['img', 'video'] });
-			DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-				if (node.nodeName.toLowerCase() === 'a') {
-					node.setAttribute('target', '_blank');
-					node.setAttribute('rel', 'noopener noreferrer');
-				}
-			});
-
-			shadowRoot.innerHTML = `
-            <style>
-                :host {
-                    position: relative;
-                    background-color: #d9d9d9;
-                    box-sizing: border-box;
-                    padding: 2rem;
-                }
-                time { display: none; }
-                p, h1, h2, h3, h4, h5 { margin: 0 0 2rem 0; }
-            </style>
-            ${clean}`;
-		}
-	}
 
 	const login = () => {
 		modalStore.add({
 			title: 'Login',
 			component: LoginModal,
-			props: {}
+			props: {},
+			size: 'sm'
 		});
 	};
 
@@ -93,28 +85,45 @@
 	let showCode = false;
 </script>
 
-<section style={`${data.orientation == 'landscape' ? 'flex-direction: column' : 'flex-direction: row'}`}>
+<svelte:window bind:innerWidth={width} />
+<section style={`${data.orientation == 'landscape' || mobile ? 'flex-direction: column' : 'flex-direction: row'}`}>
 	<div
-		style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
-			position: relative !important;
-            display: ${showCode ? 'none' : 'flex'} !important;
-            ${
-							data.orientation?.toLowerCase() === 'landscape'
-								? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
-								: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
-						}`}>
-		<article bind:this={shadowHost} style="min-width: 100%; min-height: 100%;" />
+		style={`transform: scale(${data.orientation == 'landscape' ? scaleFactor : 1}); 
+		transform-origin: top left;
+	${data.orientation === 'landscape' ? `width: ${500 * scaleFactor}px; height: ${350 * scaleFactor}px;` : `width: ${350}px; height: ${500}px;`};
+	display: ${showCode ? 'none' : 'flex'} !important;
+	border: 1px solid var(--text);
+
+	`}>
+		<BoardComponent
+			board={{
+				body: data.body,
+				orientation: data.orientation?.toLocaleLowerCase() === 'landscape' ? 'Landscape' : 'Portrait',
+				timestamp: '',
+				last_modified: data.lastModified || '',
+				signature: '',
+				key: data.id
+			}} />
 	</div>
 	<div
 		class="text-editor"
-		style={`border: 0px solid black !important; overflow: hidden !important; display: flex; box-sizing: border-box !important; margin: 0.25rem !important;
-		position: relative !important;
-		display: ${showCode ? 'flex' : 'none'} !important;
-		${
-			data.orientation?.toLowerCase() === 'landscape'
-				? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
-				: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
-		}`}>
+		style={`
+			border: 1px solid var(--text);
+			${
+				data.orientation === 'landscape'
+					? `
+			width: ${500 * scaleFactor}px; 
+			max-width: ${500 * scaleFactor}px;
+
+			height: ${350 * scaleFactor}px;
+			max-height: ${350 * scaleFactor}px;`
+					: `
+			width: ${350}px; 
+			max-width: ${350}px;
+			height: ${500}px;
+			max-height: ${500}px;`
+			};
+		display: ${showCode ? 'flex' : 'none'} !important;`}>
 		<pre id="highlighting" aria-hidden="true">
 			<code class="language-html" id="highlighting-content" />
 		</pre>
@@ -123,8 +132,10 @@
 	<div
 		class="info"
 		style={` ${
-			data.orientation?.toLowerCase() === 'landscape'
-				? 'max-width:500px !important; min-width: 500px !important; max-height: 350px !important; min-height: 350px !important'
+			mobile
+				? ''
+				: data.orientation?.toLowerCase() === 'landscape'
+				? `max-width:${500}px !important; min-width: ${500}px !important; max-height: ${350}px !important; min-height: ${350}px !important`
 				: 'max-height: 500px !important ; min-height: 500px !important; max-width: 350px !important; min-width: 350px !important'
 		}`}>
 		<div><b>Key:</b> {data.id}</div>
@@ -152,14 +163,25 @@
 </section>
 
 <style lang="scss">
+	@media (max-width: 500px) {
+		section {
+			flex-direction: column !important;
+		}
+		.info {
+			height: fit-content !important;
+			margin: 1rem;
+		}
+	}
+
 	section {
 		box-sizing: border-box;
-		height: 100%;
+		height: fit-content;
 		width: 100%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 20px;
+		padding-bottom: 1rem;
 	}
 
 	.info {

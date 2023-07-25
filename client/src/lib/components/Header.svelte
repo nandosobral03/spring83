@@ -6,45 +6,83 @@
 	import LoginModal from './LoginModal.svelte';
 	import { page } from '$app/stores';
 	import { userStore } from '$lib/stores/user.store';
+	import { browser } from '$app/environment';
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
+
+	let orientation = 'landscape';
+	orientation = browser ? (screen.orientation.type.includes('landscape') ? 'landscape' : 'portrait') : 'landscape';
+	let width: number;
+	$: {
+		if (browser) {
+			width = window.innerWidth;
+			orientation = browser ? (screen.orientation.type.includes('landscape') ? 'landscape' : 'portrait') : 'landscape';
+			if (width < 768) {
+				orientation = 'portrait';
+			}
+		}
+	}
 </script>
 
+<svelte:window bind:innerWidth={width} />
 <header>
 	<div class="nav_info">
-		<nav>
-			{#if $userStore}
-				<a href="/following" class:active={$page.url.pathname === '/following'}>Following</a>
-			{/if}
-			<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
-			<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
-			<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
-		</nav>
-		<div class="current_info">
-			<span>
-				Currently Hosting: {$boardCountStore}
-				{#if $boardCountStore > 0}
-					{$boardCountStore > 1 ? 'boards' : 'board'}
+		{#if orientation === 'landscape'}
+			<nav>
+				{#if $userStore}
+					<a href="/following" class:active={$page.url.pathname === '/following'}>Following</a>
 				{/if}
-			</span>
-			<span> {moment().format('dddd, MMMM Do YYYY')} </span>
-			{#if $userStore}
-				| <b>{$userStore?.username}</b>
-				<div>
-					<Button text="Logout" action={() => userStore.logout()} />
-				</div>
-			{:else}
-				<div>
-					<Button
-						text="Login"
-						action={() =>
-							modalStore.add({
-								title: 'Login',
-								component: LoginModal,
-								props: {},
-								size: 'sm'
-							})} />
-				</div>
-			{/if}
-		</div>
+				<a href="/" class:active={$page.url.pathname === '/'}>Last Updated</a>
+				<a href="/submit" class:active={$page.url.pathname === '/submit'}>Submit</a>
+				<a href="/about" class:active={$page.url.pathname === '/about'}>About</a>
+			</nav>
+
+			<div class="current_info">
+				<span>
+					Currently Hosting: {$boardCountStore}
+					{#if $boardCountStore > 0}
+						{$boardCountStore > 1 ? 'boards' : 'board'}
+					{/if}
+				</span>
+				<span> {moment().format('dddd, MMMM Do YYYY')} </span>
+				{#if $userStore}
+					| <b>{$userStore?.username}</b>
+					<div>
+						<Button text="Logout" action={() => userStore.logout()} />
+					</div>
+				{:else}
+					<div>
+						<Button
+							text="Login"
+							action={() =>
+								modalStore.add({
+									title: 'Login',
+									component: LoginModal,
+									props: {},
+									size: 'sm'
+								})} />
+					</div>
+				{/if}
+			</div>
+		{:else if orientation != 'landscape'}
+			<div class="button">
+				<Button
+					isIcon
+					text="menu"
+					action={() => {
+						dispatch('toggleNav');
+					}} />
+			</div>
+			<div class="current_info">
+				<span>
+					Currently Hosting: {$boardCountStore}
+					{#if $boardCountStore > 0}
+						{$boardCountStore > 1 ? 'boards' : 'board'}
+					{/if}
+				</span>
+			</div>
+		{/if}
 	</div>
 	<h1>
 		Spring <span> '83 </span>
@@ -54,21 +92,23 @@
 <style lang="scss">
 	* {
 		box-sizing: border-box;
-		font-family: var(--font-header);
+		font-family: var(--font-text);
 	}
 
 	header {
 		width: 100%;
-		padding: 1rem 2rem;
+		padding: 1rem 1rem;
 		position: sticky;
+		font-size: 0.8rem;
 	}
 	h1 {
-		user-select: none;
+		display: flex;
+		justify-content: center;
 		border-top: 2px solid black;
 		border-bottom: 2px solid black;
 		text-align: center;
 		padding: 1rem;
-		font-size: 6rem;
+		font-size: clamp(72px, 5rem, 10vw);
 		margin: 0.2rem;
 		font-family: 'Crimson Text', serif;
 		text-transform: uppercase;
@@ -81,8 +121,9 @@
 	.nav_info {
 		display: flex;
 		justify-content: space-between;
-		align-items: flex-end;
+		align-items: center;
 		width: 100%;
+		gap: 16px;
 		nav {
 			display: flex;
 			gap: 16px;

@@ -39,10 +39,12 @@
 			{#if toggleInfo}
 				<InfoPopOver />
 			{/if}
-			<BoardComponent bind:board />
+			<BoardComponent bind:board clickable={false} />
 		</section>
 	</div>
-	<Button action={() => signBoard()} text="Sign and Publish" style="flex-grow: 1;" />
+	<div class="button">
+		<Button action={() => signBoard()} text="Sign and Publish" style="flex-grow: 1;" />
+	</div>
 </div>
 
 <style lang="scss">
@@ -51,7 +53,7 @@
 	}
 	.container {
 		width: 100%;
-		min-height: 90%;
+		height: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
@@ -61,18 +63,15 @@
 	}
 	.preview_container {
 		width: 100%;
-		height: 90%;
+		flex-grow: 1;
 		display: flex;
 		justify-content: center;
 		gap: 10px;
 	}
 
-	section {
-		width: 50%;
-		border: 1px solid black;
-	}
-
 	.preview {
+		min-width: 600px;
+		max-width: 600px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -80,5 +79,13 @@
 		aspect-ratio: 1/1;
 		border-radius: 3px;
 		position: relative;
+	}
+
+	.button {
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 1rem;
 	}
 </style>

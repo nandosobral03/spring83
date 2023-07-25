@@ -1,5 +1,6 @@
 section {
-	padding: 1rem;
+	padding: 0rem;
+	padding-top: 1rem;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
@@ -13,8 +14,7 @@ section {
 			border: none !important;
 			border-bottom: 1px solid black !important;
 			outline: none;
-			border-radius: 3px;
-			font-size: 1rem;
+			font-size: 0.8rem;
 			background-color: transparent;
 		}
 	}

@@ -83,6 +83,9 @@
 <style lang="scss">
 	* {
 		box-sizing: border-box;
+		::-webkit-scrollbar {
+			display: none;
+		}
 	}
 	select {
 		width: 100%;
@@ -105,6 +108,7 @@
 		gap: 1rem;
 		background-color: var(--text);
 		border-radius: 3px;
+		flex-grow: 1;
 	}
 	code {
 		display: block;

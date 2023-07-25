@@ -9,9 +9,6 @@
 		<div class={`modal ${$currentModalStore?.size}`} on:click|stopPropagation on:keydown|stopPropagation role="dialog">
 			<header>
 				{$currentModalStore?.title}
-				<button on:click={() => modalStore.pop()}>
-					<span class="material-symbols-outlined">close</span>
-				</button>
 			</header>
 			<svelte:component this={$currentModalStore?.component} {...$currentModalStore?.props} />
 		</div>
