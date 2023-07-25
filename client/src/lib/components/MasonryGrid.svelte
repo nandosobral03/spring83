@@ -2,6 +2,7 @@
 	import type { Board } from '$lib/models/board.model';
 	import BoardComponent from '$lib/components/Board.svelte';
 	import { onMount } from 'svelte';
+	import EmptyState from './EmptyState.svelte';
 	export let elements: Board[];
 	let width: number;
 	let scaleFactor: number = 1;
@@ -35,7 +36,9 @@
 
 <svelte:window bind:innerWidth={width} />
 
-{#if mobile}
+{#if elements.length === 0}
+	<EmptyState />
+{:else if mobile}
 	<div class="flex">
 		{#each elements as element, i}
 			<div

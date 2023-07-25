@@ -84,7 +84,7 @@
 		{/if}
 	</div>
 	<h1>
-		Spring <span> '83 </span>
+		<img src="./title.png" alt="Spring 83" />
 	</h1>
 </header>
 
@@ -111,10 +111,14 @@
 		margin: 0.2rem;
 		font-family: 'Crimson Text', serif;
 		text-transform: uppercase;
+		font-weight: 600;
+		font-style: italic;
 		line-height: 85% !important;
-		span {
-			font-family: var(--font-header);
-		}
+		user-select: none;
+	}
+
+	img {
+		max-width: 80vw;
 	}
 
 	.nav_info {

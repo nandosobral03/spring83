@@ -151,7 +151,14 @@ pub async fn follow_key(username: String, key: String) -> Result<(), MyError> {
         })?;
 
     match following {
-        Some(_) => {
+        Some(keys) => {
+            if keys.keys.contains(&key) {
+                return Err(MyError {
+                    message: "Key already followed".to_string(),
+                    status: 409,
+                });
+            }
+
             db.collection::<Following>("following")
                 .update_one(
                     doc! {"user": &username},

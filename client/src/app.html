@@ -5,20 +5,12 @@
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 		<link
+			href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Libre+Franklin:ital,wght@0,400;0,500;1,400&display=swap"
 			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
 		/>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-		<link
-			href="https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;600;700&family=Montserrat:wght@300;400&display=swap"
-			rel="stylesheet"
-		/>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Spring '83</title>
 		%sveltekit.head%
 	</head>
@@ -36,10 +28,10 @@
 
 		:root {
 			--text: #1e1e1e;
-			--background: #d9d9d9;
+			--background: #dedbd2;
 			--accent: #2b8d76;
 			--font-header: 'Crimson Text', serif;
-			--font-text: 'Montserrat', serif;
+			--font-text: 'Libre Franklin', sans-serif;
 		}
 
 		.no-scroll {
@@ -49,12 +41,12 @@
 		/* Syntax Highlighting from prism.js starts below, partly modified: */
 
 		/* PrismJS 1.23.0
-https://prismjs.com/download.html#themes=prism-funky&languages=markup */
+		https://prismjs.com/download.html#themes=prism-funky&languages=markup */
 		/**
- * prism.js Funky theme
- * Based on “Polyfilling the gaps” talk slides http://lea.verou.me/polyfilling-the-gaps/
- * @author Lea Verou
- */
+		 * prism.js Funky theme
+		 * Based on “Polyfilling the gaps” talk slides http://lea.verou.me/polyfilling-the-gaps/
+		 * @author Lea Verou
+		 */
 
 		code[class*='language-'],
 		pre[class*='language-'] {
@@ -83,7 +75,7 @@ https://prismjs.com/download.html#themes=prism-funky&languages=markup */
 			margin: 0.5em 0;
 			overflow: auto;
 			/* background: url('data:image/svg+xml;charset=utf-8,<svg%20version%3D"1.1"%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D"100"%20height%3D"100"%20fill%3D"rgba(0%2C0%2C0%2C.2)">%0D%0A<polygon%20points%3D"0%2C50%2050%2C0%200%2C0"%20%2F>%0D%0A<polygon%20points%3D"0%2C100%2050%2C100%20100%2C50%20100%2C0"%20%2F>%0D%0A<%2Fsvg>');
-  background-size: 1em 1em; - WebCoder49*/
+		  background-size: 1em 1em; - WebCoder49*/
 			background: var(--text); /* - WebCoder49 */
 		}
 
