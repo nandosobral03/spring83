@@ -84,7 +84,7 @@
 		{/if}
 	</div>
 	<h1>
-		<img src="./title.png" alt="Spring 83" />
+		<img src="/title.png" alt="Spring 83" />
 	</h1>
 </header>
 

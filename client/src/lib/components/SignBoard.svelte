@@ -190,7 +190,9 @@
 			</div>
 			<div class="button-group">
 				<Button action={register} text="Register" type="secondary" />
-				<Button action={assignKeys} text="Want us to handle your keys?" type="secondary" />
+				<div>
+					<Button action={assignKeys} text="Want us to handle your keys?" type="secondary" />
+				</div>
 				<Button action={publish} text="Publish" />
 			</div>
 		{:else if tab === 'keys'}
@@ -227,6 +229,7 @@
 	.container {
 		width: 100%;
 		height: 100%;
+		gap: 1rem;
 		display: flex;
 		nav {
 			padding-right: 1rem;
@@ -235,6 +238,30 @@
 			border-right: 1px solid black;
 			width: 20%;
 			gap: 1rem;
+		}
+	}
+
+	@media (max-width: 500px) {
+		.container {
+			flex-direction: column;
+			nav {
+				width: 100%;
+				border-right: none;
+				padding-right: 0;
+				padding-bottom: 1rem;
+				border-bottom: 1px solid black;
+				flex-direction: row;
+				justify-content: space-between;
+				div {
+					flex-grow: 1;
+				}
+			}
+		}
+	}
+
+	.button-group {
+		div {
+			min-width: 135px;
 		}
 	}
 
