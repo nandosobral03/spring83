@@ -1,9 +1,13 @@
 import { API_URL } from "$env/static/private"
+import { error } from "@sveltejs/kit"
 import axios from "axios"
 import * as jose from "jose"
 import moment from "moment"
 export const load = async ({ params, cookies }) => {
     const board = await fetch(`${API_URL}/${params.id}`)
+    if (board.status !== 200) throw error(404, {
+        message: 'Not found'
+    });
     const body = await board.text()
 
     const token = cookies?.get("jwt")

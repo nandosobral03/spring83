@@ -63,16 +63,28 @@
 			type="text"
 			placeholder="Username"
 			bind:value={form.username.value}
+			on:keydown={(event) => {
+				form.username.touched = true;
+				if (event.key === 'Enter') assignKeys();
+			}}
 			style={`border-color: ${form.username.touched && !form.username.value ? 'red !important' : ''}`} />
 		<input
 			type="password"
 			placeholder="Password"
 			bind:value={form.password.value}
+			on:keydown={(event) => {
+				form.password.touched = true;
+				if (event.key === 'Enter') assignKeys();
+			}}
 			style={`border-color: ${form.password.touched && !form.password.value ? 'red !important' : ''}`} />
 		<input
 			type="password"
 			placeholder="Private key"
 			bind:value={form.privateKey.value}
+			on:keydown={(event) => {
+				form.privateKey.touched = true;
+				if (event.key === 'Enter') assignKeys();
+			}}
 			style={`border-color: ${form.privateKey.touched && !form.privateKey.value ? 'red !important' : ''}`} />
 	</div>
 	<div class="button-group">

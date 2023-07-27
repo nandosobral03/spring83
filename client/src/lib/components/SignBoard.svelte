@@ -181,11 +181,19 @@
 					type="text"
 					placeholder="Username"
 					bind:value={loginForm.username.value}
+					on:keydown={(event) => {
+						loginForm.username.touched = true;
+						if (event.key === 'Enter') publish();
+					}}
 					style={`border-color: ${loginForm.username.touched && !loginForm.username.value ? 'red !important' : ''}`} />
 				<input
 					type="password"
 					placeholder="Password"
 					bind:value={loginForm.password.value}
+					on:keydown={(event) => {
+						loginForm.password.touched = true;
+						if (event.key === 'Enter') publish();
+					}}
 					style={`border-color: ${loginForm.password.touched && !loginForm.password.value ? 'red !important' : ''}`} />
 			</div>
 			<div class="button-group">
@@ -201,11 +209,19 @@
 					type="text"
 					placeholder="Public key"
 					bind:value={keysForm.publicKey.value}
+					on:keydown={(event) => {
+						keysForm.publicKey.touched = true;
+						if (event.key === 'Enter') publish();
+					}}
 					style={`border-color: ${keysForm.publicKey.touched && !keysForm.publicKey.value ? 'red !important' : ''}`} />
 				<input
 					type="password"
 					placeholder="Private key"
 					bind:value={keysForm.privateKey.value}
+					on:keydown={(event) => {
+						keysForm.privateKey.touched = true;
+						if (event.key === 'Enter') publish();
+					}}
 					style={`border-color: ${keysForm.privateKey.touched && !keysForm.privateKey.value ? 'red !important' : ''}`} />
 			</div>
 			<div class="button-group">
