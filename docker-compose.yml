@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  mongodb-container:
+    image: mongo
+    networks:
+      - my-network
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "27017:27017"
+
+  spring83server:
+    image: spring83server
+    networks:
+      - my-network
+    ports:
+      - "3010:3000"
+    depends_on:
+      - mongodb-container
+    environment:
+      - DATABASE_URL=mongodb://mongodb-container:27017/spring83
+networks:
+  my-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:

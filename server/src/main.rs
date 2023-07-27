@@ -83,8 +83,8 @@ async fn create_server() {
                 .allow_headers(Any),
         );
     // Start the server
-    let addr = ("127.0.0.1:".to_string() + &port).parse().unwrap();
-
+    let addr = ("0.0.0.0:".to_string() + &port).parse().unwrap();
+    println!("Listening on {}", addr);
     Server::bind(&addr)
         .serve(app.into_make_service())
         .await
